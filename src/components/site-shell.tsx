@@ -1,0 +1,56 @@
+import { Link } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
+import { Toaster } from "sonner";
+import { CompareBar } from "@/components/compare-bar";
+import { Wordmark } from "@/components/logo";
+import { TabBar } from "@/components/tab-bar";
+import { DATA_AS_OF } from "@/data/cards";
+import { useCatalog } from "@/lib/catalog";
+import { useDesk } from "@/lib/store";
+import { cn } from "@/lib/utils";
+
+export function SiteShell({ children }: { children: ReactNode }) {
+  const selected = useDesk((s) => s.selected);
+
+  useEffect(() => {
+    useCatalog.getState().hydrate();
+  }, []);
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-bg text-fg">
+      <header className="sticky top-0 z-30 px-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="mx-auto flex h-12 max-w-2xl items-center justify-between rounded-full px-4 glass">
+          <Link to="/" className="shrink-0 pressable">
+            <Wordmark />
+          </Link>
+          <Link
+            to="/compare"
+            className={cn(
+              "text-[15px] font-semibold pressable",
+              selected.length ? "text-accent" : "text-subtle",
+            )}
+          >
+            比较{selected.length ? ` ${selected.length}` : ""}
+          </Link>
+        </div>
+      </header>
+      <main className="flex-1">{children}</main>
+      <footer className="mx-auto w-full max-w-2xl px-6 pb-32 pt-4 text-[12px] leading-relaxed text-subtle">
+        <p>卡衡 · {DATA_AS_OF}</p>
+        <p className="mt-1">
+          费率按公开条款折算，可在管理页改成你的口径。本站无邀请返佣。U
+          卡会停服，只放亏得起的额度。
+        </p>
+      </footer>
+      <CompareBar />
+      <TabBar />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          className:
+            "!rounded-full !border-0 !bg-fg !text-bg !shadow-[0_12px_40px_rgba(0,0,0,0.18)] !text-[14px] !font-medium",
+        }}
+      />
+    </div>
+  );
+}

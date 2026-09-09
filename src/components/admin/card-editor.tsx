@@ -1,0 +1,440 @@
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Area, Divider, Field, Group, Row, Segmented } from "@/components/ios";
+import { PlasticCard } from "@/components/plastic-card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  SCENE_LABEL,
+  type Category,
+  type Custody,
+  type FormFactor,
+  type Kyc,
+  type Network,
+  type Region,
+  type Scene,
+  type Status,
+  type Tint,
+  type UCard,
+} from "@/data/cards";
+import { useCatalog } from "@/lib/catalog";
+
+const SCENES: Scene[] = ["ai", "daily", "apple", "ads", "offramp"];
+const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "us", "eea", "global"];
+const TINTS: Tint[] = ["sage", "slate", "stone", "olive", "ink", "paper"];
+
+function num(v: string): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function nullable(v: string): number | null {
+  if (v.trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean }) {
+  const [draft, setDraft] = useState<UCard>(initial);
+  const upsert = useCatalog((s) => s.upsert);
+  const remove = useCatalog((s) => s.remove);
+  const navigate = useNavigate();
+
+  function patch<K extends keyof UCard>(key: K, value: UCard[K]) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
+
+  function toggleArr<T>(list: T[], item: T): T[] {
+    return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+  }
+
+  function save() {
+    if (!draft.name.trim()) {
+      toast.error("先写一个卡名");
+      return;
+    }
+    let slug = draft.slug
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    if (isNew && (!slug || slug === "new-card")) {
+      slug = `custom-${Math.random().toString(36).slice(2, 7)}`;
+    }
+    upsert({ ...draft, slug: slug || draft.slug });
+    toast.success("已保存到本机");
+    void navigate({ to: "/admin" });
+  }
+
+  function onDelete() {
+    if (!confirm(`删除「${draft.name}」？此操作只影响你这台设备上的资料。`)) return;
+    remove(draft.slug);
+    toast.success("已删除");
+    void navigate({ to: "/admin" });
+  }
+
+  return (
+    <div>
+      <div className="mx-auto mb-5 max-w-xs">
+        <PlasticCard card={draft} />
+      </div>
+
+      <Group header="基本">
+        <Field label="中文名" value={draft.name} onChange={(v) => patch("name", v)} />
+        <Divider />
+        <Field label="英文名" value={draft.nameEn} onChange={(v) => patch("nameEn", v)} />
+        <Divider />
+        <Field label="发行方" value={draft.issuer} onChange={(v) => patch("issuer", v)} />
+        <Divider />
+        <Field
+          label="标识"
+          value={draft.slug}
+          onChange={(v) => patch("slug", v)}
+          placeholder="url-slug"
+        />
+        <Divider />
+        <Field
+          label="官网"
+          value={draft.url ?? ""}
+          onChange={(v) => patch("url", v || undefined)}
+          type="url"
+        />
+      </Group>
+
+      <Group header="分类">
+        <div className="space-y-3 px-4 py-3">
+          <Segmented<Network>
+            id="net"
+            value={draft.network}
+            onChange={(v) => patch("network", v)}
+            options={[
+              { value: "visa", label: "Visa" },
+              { value: "mastercard", label: "Mastercard" },
+            ]}
+          />
+          <Segmented<FormFactor>
+            id="form"
+            value={draft.form}
+            onChange={(v) => patch("form", v)}
+            options={[
+              { value: "virtual", label: "虚拟" },
+              { value: "physical", label: "实体" },
+              { value: "both", label: "都有" },
+            ]}
+          />
+          <Segmented<Status>
+            id="status"
+            value={draft.status}
+            onChange={(v) => patch("status", v)}
+            options={[
+              { value: "active", label: "在运营" },
+              { value: "restricted", label: "受限" },
+              { value: "shutdown", label: "停服" },
+            ]}
+          />
+          <Segmented<Category>
+            id="cat"
+            value={draft.category}
+            onChange={(v) => patch("category", v)}
+            options={[
+              { value: "exchange", label: "交易所" },
+              { value: "wallet", label: "钱包" },
+              { value: "defi", label: "链上" },
+              { value: "vcc", label: "虚拟卡" },
+            ]}
+          />
+          <Segmented<Custody>
+            id="cus"
+            value={draft.custody}
+            onChange={(v) => patch("custody", v)}
+            options={[
+              { value: "custodial", label: "托管" },
+              { value: "self-custody", label: "自托管" },
+              { value: "hybrid", label: "混合" },
+            ]}
+          />
+          <Segmented<Kyc>
+            id="kyc"
+            value={draft.kyc}
+            onChange={(v) => patch("kyc", v)}
+            options={[
+              { value: "none", label: "免" },
+              { value: "basic", label: "基础" },
+              { value: "id", label: "身份证" },
+              { value: "passport", label: "护照" },
+              { value: "full", label: "完整" },
+            ]}
+          />
+        </div>
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">卡面颜色</p>
+          <div className="flex flex-wrap gap-1.5">
+            {TINTS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => patch("tint", t)}
+                data-tint={t}
+                className="size-8 rounded-full pressable"
+                style={{
+                  background: "var(--card-face)",
+                  boxShadow: draft.tint === t ? "0 0 0 2px var(--color-accent)" : undefined,
+                }}
+                aria-label={t}
+              />
+            ))}
+          </div>
+        </div>
+      </Group>
+
+      <Group header="费用" footer="单位美元或百分比。开卡费会按 12 个月摊进每月净收益。">
+        <Field
+          label="开卡费"
+          type="number"
+          suffix="$"
+          value={draft.openingFeeUsd}
+          onChange={(v) => patch("openingFeeUsd", num(v))}
+        />
+        <Divider />
+        <Field
+          label="实体卡"
+          type="number"
+          suffix="$"
+          value={draft.physicalFeeUsd}
+          onChange={(v) => patch("physicalFeeUsd", num(v))}
+        />
+        <Divider />
+        <Field
+          label="年费"
+          type="number"
+          suffix="$"
+          value={draft.annualFeeUsd}
+          onChange={(v) => patch("annualFeeUsd", num(v))}
+        />
+        <Divider />
+        <Field
+          label="月费"
+          type="number"
+          suffix="$"
+          value={draft.monthlyFeeUsd}
+          onChange={(v) => patch("monthlyFeeUsd", num(v))}
+        />
+        <Divider />
+        <Field
+          label="充值费"
+          type="number"
+          suffix="%"
+          value={draft.topupFeePct}
+          onChange={(v) => patch("topupFeePct", num(v))}
+        />
+        <Divider />
+        <Field
+          label="消费费"
+          type="number"
+          suffix="%"
+          value={draft.spendFeePct}
+          onChange={(v) => patch("spendFeePct", num(v))}
+        />
+        <Divider />
+        <Field
+          label="活动消费费"
+          type="number"
+          suffix="%"
+          value={draft.promoSpendFeePct ?? ""}
+          onChange={(v) => patch("promoSpendFeePct", v === "" ? undefined : num(v))}
+        />
+        <Divider />
+        <Field
+          label="活动截止"
+          value={draft.promoUntil ?? ""}
+          onChange={(v) => patch("promoUntil", v || undefined)}
+          placeholder="2026-09-30"
+        />
+        <Divider />
+        <Field
+          label="非美元 FX"
+          type="number"
+          suffix="%"
+          value={draft.fxFeePct}
+          onChange={(v) => patch("fxFeePct", num(v))}
+        />
+      </Group>
+
+      <Group header="返现" footer="封顶留空表示无上限。金额封顶是每月最多返多少美元。">
+        <Field
+          label="入门返现"
+          type="number"
+          suffix="%"
+          value={draft.cashbackPct}
+          onChange={(v) => patch("cashbackPct", num(v))}
+        />
+        <Divider />
+        <Field
+          label="进阶返现"
+          type="number"
+          suffix="%"
+          value={draft.cashbackPctHigh}
+          onChange={(v) => patch("cashbackPctHigh", num(v))}
+        />
+        <Divider />
+        <Field
+          label="入门封顶"
+          type="number"
+          suffix="$"
+          value={draft.cashbackAmountCapUsd ?? ""}
+          onChange={(v) => patch("cashbackAmountCapUsd", nullable(v))}
+        />
+        <Divider />
+        <Field
+          label="进阶封顶"
+          type="number"
+          suffix="$"
+          value={draft.cashbackAmountCapHighUsd ?? ""}
+          onChange={(v) => patch("cashbackAmountCapHighUsd", nullable(v))}
+        />
+        <Divider />
+        <Field
+          label="计返消费"
+          type="number"
+          suffix="$"
+          value={draft.cashbackSpendCapUsd ?? ""}
+          onChange={(v) => patch("cashbackSpendCapUsd", nullable(v))}
+        />
+        <Divider />
+        <Area
+          label="返现说明"
+          value={draft.cashbackNote}
+          onChange={(v) => patch("cashbackNote", v)}
+        />
+      </Group>
+
+      <Group header="能力">
+        <Row label="Apple Pay">
+          <Switch checked={draft.applePay} onCheckedChange={(v) => patch("applePay", v)} />
+        </Row>
+        <Divider />
+        <Row label="Google Pay">
+          <Switch checked={draft.googlePay} onCheckedChange={(v) => patch("googlePay", v)} />
+        </Row>
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">场景</p>
+          <div className="flex flex-wrap gap-1.5">
+            {SCENES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => patch("scenes", toggleArr(draft.scenes, s))}
+                className={
+                  draft.scenes.includes(s)
+                    ? "h-8 rounded-full bg-accent px-3 text-[13px] font-medium text-accent-fg pressable"
+                    : "h-8 rounded-full bg-surface-2 px-3 text-[13px] font-medium text-muted pressable"
+                }
+              >
+                {SCENE_LABEL[s]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">地区</p>
+          <div className="flex flex-wrap gap-1.5">
+            {REGIONS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => patch("regions", toggleArr(draft.regions, r))}
+                className={
+                  draft.regions.includes(r)
+                    ? "h-8 rounded-full bg-accent px-3 text-[13px] font-medium uppercase text-accent-fg pressable"
+                    : "h-8 rounded-full bg-surface-2 px-3 text-[13px] font-medium uppercase text-muted pressable"
+                }
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Divider />
+        <Field
+          label="资产"
+          value={draft.assets.join(", ")}
+          onChange={(v) =>
+            patch(
+              "assets",
+              v
+                .split(/[,，]/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            )
+          }
+          placeholder="USDT, USDC"
+        />
+        <Divider />
+        <Row label="风险">
+          <div className="flex gap-1">
+            {([1, 2, 3, 4, 5] as const).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => patch("risk", n)}
+                className={
+                  draft.risk === n
+                    ? "size-8 rounded-full bg-fg text-[13px] font-semibold text-bg pressable"
+                    : "size-8 rounded-full bg-surface-2 text-[13px] text-muted pressable"
+                }
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </Row>
+      </Group>
+
+      <Group header="文案">
+        <Area label="一句话" value={draft.summary} onChange={(v) => patch("summary", v)} />
+        <Divider />
+        <Area label="适合谁" value={draft.bestFor} onChange={(v) => patch("bestFor", v)} />
+        <Divider />
+        <Area label="状态说明" value={draft.statusNote} onChange={(v) => patch("statusNote", v)} />
+        <Divider />
+        <Area label="风险说明" value={draft.riskNote} onChange={(v) => patch("riskNote", v)} />
+        <Divider />
+        <Area label="KYC 说明" value={draft.kycNote} onChange={(v) => patch("kycNote", v)} />
+        <Divider />
+        <Area
+          label="优点（一行一条）"
+          value={draft.pros.join("\n")}
+          onChange={(v) => patch("pros", v.split("\n").filter((x) => x.trim()))}
+        />
+        <Divider />
+        <Area
+          label="缺点（一行一条）"
+          value={draft.cons.join("\n")}
+          onChange={(v) => patch("cons", v.split("\n").filter((x) => x.trim()))}
+        />
+        <Divider />
+        <Field
+          label="停服日期"
+          value={draft.shutdownDate ?? ""}
+          onChange={(v) => patch("shutdownDate", v || undefined)}
+          placeholder="2025-07-12"
+        />
+      </Group>
+
+      <div className="flex flex-col gap-3">
+        <Button onClick={save} className="w-full">
+          {isNew ? "添加并保存" : "保存修改"}
+        </Button>
+        {!isNew && (
+          <Button variant="ghost" className="w-full text-loss" onClick={onDelete}>
+            删除这张卡
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

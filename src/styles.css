@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #e8e8ed;
+  --color-fg: #1c1c1e;
+  --color-muted: #636366;
+  --color-subtle: #8e8e93;
+  --color-border: #e5e5ea;
+  --color-accent: #007aff;
+  --color-accent-fg: #ffffff;
+  --color-gain: #34c759;
+  --color-gain-dim: #eaf8ee;
+  --color-loss: #ff3b30;
+  --color-loss-dim: #fdecea;
+  --color-warn: #ff9f0a;
+  --color-warn-dim: #fff4e0;
+  --color-glass: rgba(255, 255, 255, 0.58);
+  --color-knob: #ffffff;
+
+  --font-sans: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  --font-serif: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+
+  --shadow-glass:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 10px 40px rgba(15, 15, 20, 0.1);
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(15, 15, 20, 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.47;
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-serif);
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    font-weight: 700;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 28%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  box-shadow: var(--shadow-glass);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.ios-card {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.pressable {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pressable:active {
+  transform: scale(0.96);
+}
+
+[data-tint="sage"] {
+  --card-face: #1b221c;
+  --card-ink: #dce4d6;
+  --card-mute: #8a9786;
+}
+[data-tint="slate"] {
+  --card-face: #191c22;
+  --card-ink: #d6dbe4;
+  --card-mute: #848a96;
+}
+[data-tint="stone"] {
+  --card-face: #1e1c1a;
+  --card-ink: #e6e0d6;
+  --card-mute: #958e84;
+}
+[data-tint="olive"] {
+  --card-face: #1c2018;
+  --card-ink: #dde4d0;
+  --card-mute: #8b937c;
+}
+[data-tint="ink"] {
+  --card-face: #141416;
+  --card-ink: #ecece8;
+  --card-mute: #8a8a86;
+}
+[data-tint="paper"] {
+  --card-face: #cfcbc2;
+  --card-ink: #1a1916;
+  --card-mute: #5c5850;
+}
+
+.card-glow {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--card-ink) 18%, transparent),
+    transparent 62%
+  );
+}
+
+.card-spec {
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--card-ink) 16%, transparent),
+    transparent 42%,
+    color-mix(in oklab, var(--card-face) 40%, black) 100%
+  );
+}
+
+.card-sheen {
+  background: linear-gradient(
+    115deg,
+    transparent 18%,
+    color-mix(in oklab, var(--card-ink) 26%, transparent) 46%,
+    transparent 64%
+  );
+  background-size: 220% 100%;
+  animation: sheen-sweep 6.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes sheen-sweep {
+  0%,
+  100% {
+    background-position: 130% 0;
+    opacity: 0.28;
+  }
+  45% {
+    background-position: -10% 0;
+    opacity: 0.72;
+  }
+}
+
+.card-chip {
+  background: color-mix(in oklab, var(--card-ink) 22%, transparent);
+}
