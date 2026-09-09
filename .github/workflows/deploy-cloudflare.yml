@@ -26,10 +26,12 @@ jobs:
         run: |
           python3 <<'PY'
           import json, os, urllib.error, urllib.request
+          from datetime import date
 
           token = os.environ["CLOUDFLARE_API_TOKEN"]
           account = os.environ["CLOUDFLARE_ACCOUNT_ID"]
           name = "kaheng"
+          compat = date.today().isoformat()
           payload = {
               "name": name,
               "production_branch": "main",
@@ -39,14 +41,14 @@ jobs:
               },
               "deployment_configs": {
                   "production": {
-                      "compatibility_date": "2026-09-10",
+                      "compatibility_date": compat,
                       "compatibility_flags": ["nodejs_compat"],
                       "env_vars": {
                           "NODE_VERSION": {"type": "plain_text", "value": "22"},
                       },
                   },
                   "preview": {
-                      "compatibility_date": "2026-09-10",
+                      "compatibility_date": compat,
                       "compatibility_flags": ["nodejs_compat"],
                       "env_vars": {
                           "NODE_VERSION": {"type": "plain_text", "value": "22"},
