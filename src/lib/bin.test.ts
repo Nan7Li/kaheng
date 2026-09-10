@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
+import { gunzipSync } from "node:zlib";
 import { CARDS } from "../data/cards.ts";
 import {
   countryFromAlpha2,
@@ -16,6 +18,7 @@ import {
   schemeFromPrefix,
   sourceLabel,
 } from "./bin.ts";
+import { decodeIndexBody, loadIndexFile, matchIndexLines, parseIndexRecord, type BinIndexFile } from "./bin-index.ts";
 
 test("strips PAN to at most 8 digits", () => {
   assert.equal(digitsOnly("4938 7512 3456 7890"), "49387512");
@@ -112,4 +115,38 @@ test("missing live record still reports Mastercard from the prefix", () => {
   const hit = prefixHit("555555", "miss");
   assert.equal(hit.scheme, "mastercard");
   assert.match(formatBinHit(hit), /Mastercard/);
+});
+
+test("index decoder accepts both gzip bytes and already-unzipped JSON", async () => {
+  const gz = readFileSync("public/bin-index.json.gz");
+  const fromGzip = await decodeIndexBody(gz.buffer.slice(gz.byteOffset, gz.byteOffset + gz.byteLength));
+  const raw = gunzipSync(gz);
+  const fromPlain = await decodeIndexBody(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
+  assert.equal(JSON.parse(fromGzip).n, JSON.parse(fromPlain).n);
+  assert.ok(JSON.parse(fromGzip).n > 400_000);
+});
+
+test("open BIN index resolves common prefixes without a live API", async () => {
+  const gz = readFileSync("public/bin-index.json.gz");
+  const json = JSON.parse(await decodeIndexBody(gz.buffer.slice(gz.byteOffset, gz.byteOffset + gz.byteLength))) as BinIndexFile;
+  const idx = loadIndexFile(json);
+  const poland = matchIndexLines("411111", idx.lines, idx.banks);
+  assert.equal(poland?.scheme, "visa");
+  assert.equal(poland?.country, "eea");
+  assert.match(poland?.bank ?? "", /CONOTOXIA/i);
+  assert.equal(poland?.source, "index");
+  const stripe = matchIndexLines("424242", idx.lines, idx.banks);
+  assert.equal(stripe?.country, "uk");
+  const bybit = matchIndexLines("493875", idx.lines, idx.banks);
+  assert.equal(bybit?.country, "hk");
+});
+
+test("index record parser maps scheme letter and bank table", () => {
+  const hit = parseIndexRecord("457173vDKd2", ["x", "y", "DEN JYSKE SPAREKASSE"]);
+  assert.ok(hit);
+  assert.equal(hit.scheme, "visa");
+  assert.equal(hit.country, "eea");
+  assert.equal(hit.type, "debit");
+  assert.equal(hit.bank, "DEN JYSKE SPAREKASSE");
+  assert.equal(sourceLabel("index"), "开源库");
 });

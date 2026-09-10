@@ -16,15 +16,24 @@ function BinPage() {
       <LargeTitle eyebrow="只填前 6–8 位">识别 BIN</LargeTitle>
       <Fade>
         <p className="mb-5 max-w-xl text-[17px] leading-relaxed text-muted">
-          发卡地决定 ChatGPT、Apple ID 能不能过。完整卡号不会保存，多出来的数字当场丢掉。本站只收对得上的 U 卡段；其他前缀查公共库，额度用完时至少告诉你 Visa 还是 Mastercard。
+          发卡地决定 ChatGPT、Apple ID 能不能过。完整卡号不会保存。查询走本站内置的开源 BIN 表（GitHub{" "}
+          <a
+            href="https://github.com/Techbuddie-Solutions/binlist-data"
+            className="text-accent"
+            target="_blank"
+            rel="noreferrer"
+          >
+            binlist-data
+          </a>
+          ，约 45 万条，CC BY 4.0），不请求会限流的 binlist.net / HandyAPI。U 卡已知段优先对上卡库。
         </p>
       </Fade>
 
-      <Group header="查卡段" footer="已知 U 卡段走本站表。其他前缀查公共库；额度用完时按卡号前缀判断卡组织。">
+      <Group header="查卡段" footer="已知 U 卡段走本站表。其他前缀查内置开源库，不依赖 binlist.net。">
         <BinLookup auto />
       </Group>
 
-      <Group header="本站已知 U 卡段" footer="社区反馈和公共库对得上的才收进来。没有的段，贴前 6 位也能查。">
+      <Group header="本站已知 U 卡段" footer="社区核对过的 U 卡段。没有的前缀也能在开源库里查出发卡地。">
         {KNOWN_BINS.map((row, i) => {
           const card = row.cardSlug ? cards.find((c) => c.slug === row.cardSlug) : undefined;
           return (

@@ -6,7 +6,7 @@ import {
 } from "../data/cards.ts";
 
 export type BinScheme = "visa" | "mastercard" | "amex" | "unionpay" | "unknown";
-export type BinSource = "known" | "live" | "prefix";
+export type BinSource = "known" | "index" | "live" | "prefix";
 
 export interface BinHit {
   bin: string;
@@ -225,6 +225,7 @@ export function formatBinHit(hit: BinHit): string {
 
 export function sourceLabel(source: BinSource | string): string {
   if (source === "known") return "本站已知段";
+  if (source === "index") return "开源库";
   if (source === "prefix") return "仅卡组织";
   return "公共库";
 }

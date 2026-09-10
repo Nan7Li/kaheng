@@ -5,7 +5,6 @@ import type { BinCountry, Network, UCard } from "@/data/cards";
 import { BIN_COUNTRY_LABEL } from "@/data/cards";
 import {
   digitsOnly,
-  fetchHandyApi,
   formatBinHit,
   hitFromKnown,
   matchCatalog,
@@ -15,7 +14,7 @@ import {
   sourceLabel,
   type BinHit,
 } from "@/lib/bin";
-import { lookupBin } from "@/lib/bin.functions";
+import { loadBinIndex, matchIndex } from "@/lib/bin-index";
 import { useCatalog } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
@@ -84,19 +83,13 @@ export async function identifyBin(raw: string, cards: UCard[]): Promise<BinHit> 
     writeCache(hit);
     return hit;
   }
-  try {
-    const hit = attach(await lookupBin({ data: { bin } }));
+  const local = await matchIndex(bin);
+  if (local) {
+    const hit = attach(local);
     writeCache(hit);
     return hit;
-  } catch {
-    const handy = await fetchHandyApi(bin);
-    if ("hit" in handy) {
-      const hit = attach(handy.hit);
-      writeCache(hit);
-      return hit;
-    }
-    return attach(prefixHit(bin, "rate" in handy ? "rate" : "miss"));
   }
+  return attach(prefixHit(bin, "miss"));
 }
 
 export function BinLookup({
@@ -113,6 +106,10 @@ export function BinLookup({
   const [busy, setBusy] = useState(false);
   const [hit, setHit] = useState<BinHit | null>(null);
   const last = useRef("");
+
+  useEffect(() => {
+    void loadBinIndex();
+  }, []);
 
   async function run(raw = value) {
     const bin = digitsOnly(raw);
