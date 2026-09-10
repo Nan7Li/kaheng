@@ -15,7 +15,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "把 18 张在运营 U 卡的费率折成同一个数字：每消费 $1,000，你到底赚还是亏。",
+        content: "把 U 卡的返现、转换、消费和换汇费用折成同一个净收益，并标明官方核验来源。",
       },
       { name: "theme-color", content: "#f2f2f7" },
     ],
@@ -28,7 +28,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap",
       },
     ],
   }),

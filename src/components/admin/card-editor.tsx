@@ -20,6 +20,7 @@ import {
   type Status,
   type Tint,
   type UCard,
+  type Verification,
   resolveBin,
 } from "@/data/cards";
 import {
@@ -32,7 +33,7 @@ import { useCatalog } from "@/lib/catalog";
 import { compressFace } from "@/lib/face";
 
 const SCENES: Scene[] = ["ai", "daily", "apple", "ads", "offramp"];
-const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "us", "eea", "global"];
+const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "sg", "us", "eea", "global"];
 const TINTS: Tint[] = ["sage", "slate", "stone", "olive", "ink", "paper"];
 const BINS = Object.keys(BIN_COUNTRY_LABEL) as BinCountry[];
 
@@ -198,6 +199,43 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
             </button>
           </>
         )}
+      </Group>
+
+      <Group header="数据来源" footer="只有核过官方帮助页的条目才标“官方已核”；页面会公开这些链接。">
+        <div className="px-4 py-3">
+          <Segmented<Verification>
+            value={draft.verification ?? "unverified"}
+            onChange={(v) => patch("verification", v)}
+            options={[
+              { value: "unverified", label: "未核验" },
+              { value: "partial", label: "部分官方" },
+              { value: "secondary", label: "二手来源" },
+              { value: "official", label: "官方已核" },
+            ]}
+          />
+        </div>
+        <Divider />
+        <Field
+          label="核验日期"
+          value={draft.verifiedAt ?? ""}
+          onChange={(v) => patch("verifiedAt", v || undefined)}
+          placeholder="2026-09-10"
+        />
+        <Divider />
+        <Area
+          label="来源链接"
+          value={(draft.sourceUrls ?? []).join("\n")}
+          onChange={(v) =>
+            patch(
+              "sourceUrls",
+              v
+                .split(/\n/)
+                .map((url) => url.trim())
+                .filter(Boolean),
+            )
+          }
+          placeholder="每行一个官方页面"
+        />
       </Group>
 
       <Group
@@ -427,6 +465,14 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
           suffix="%"
           value={draft.topupFeePct}
           onChange={(v) => patch("topupFeePct", num(v))}
+        />
+        <Divider />
+        <Field
+          label="币种转换"
+          type="number"
+          suffix="%"
+          value={draft.cryptoConversionFeePct ?? 0}
+          onChange={(v) => patch("cryptoConversionFeePct", num(v))}
         />
         <Divider />
         <Field

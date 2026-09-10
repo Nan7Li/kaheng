@@ -26,7 +26,9 @@ const ROWS: Array<{ label: string; render: (c: UCard) => string }> = [
   { label: "KYC", render: (c) => KYC_LABEL[c.kyc] ?? "—" },
   { label: "Apple Pay", render: (c) => (c.applePay ? "支持" : "不支持") },
   { label: "开卡费", render: (c) => `$${c.openingFeeUsd ?? 0}` },
+  { label: "实体卡费", render: (c) => `$${c.physicalFeeUsd ?? 0}` },
   { label: "充值费", render: (c) => `${c.topupFeePct ?? 0}%` },
+  { label: "币种转换", render: (c) => `${c.cryptoConversionFeePct ?? 0}%` },
   { label: "消费费", render: (c) => `${c.spendFeePct ?? 0}%` },
   { label: "FX", render: (c) => `${c.fxFeePct ?? 0}%` },
   {
@@ -44,9 +46,10 @@ function ComparePage() {
   const spend = useDesk((s) => s.spend);
   const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const toggle = useDesk((s) => s.toggleSelected);
   const cards = useCatalog((s) => s.cards);
-  const input = { spend, bill, tier };
+  const input = { spend, bill, tier, includePhysicalFee };
   const picked = selected
     .map((slug) => cards.find((c) => c.slug === slug))
     .filter((c): c is UCard => Boolean(c));

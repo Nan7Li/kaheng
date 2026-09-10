@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { CARDS, type UCard } from "@/data/cards";
+import { CARDS, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 2;
+export const SEED_REVISION = 3;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -39,10 +39,14 @@ export function normalizeCard(raw: unknown): UCard | null {
     annualFeeUsd: asNum(c.annualFeeUsd),
     monthlyFeeUsd: asNum(c.monthlyFeeUsd),
     topupFeePct: asNum(c.topupFeePct),
+    cryptoConversionFeePct: asNum(c.cryptoConversionFeePct),
     spendFeePct: asNum(c.spendFeePct),
     fxFeePct: asNum(c.fxFeePct),
     cashbackPct: asNum(c.cashbackPct),
     cashbackPctHigh: asNum(c.cashbackPctHigh),
+    sourceUrls: Array.isArray(c.sourceUrls)
+      ? c.sourceUrls.filter((url): url is string => typeof url === "string")
+      : [],
     risk: ([1, 2, 3, 4, 5] as const).includes(c.risk as 1) ? (c.risk as 1 | 2 | 3 | 4 | 5) : 3,
   };
 }
@@ -129,6 +133,7 @@ export function createBlankCard(): UCard {
     annualFeeUsd: 0,
     monthlyFeeUsd: 0,
     topupFeePct: 0,
+    cryptoConversionFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
     cashbackPct: 0,
@@ -145,7 +150,9 @@ export function createBlankCard(): UCard {
     bestFor: "",
     pros: [],
     cons: [],
-    updatedAt: "2026-09",
+    sourceUrls: [],
+    verification: "unverified",
+    updatedAt: "2026-09-10",
   };
 }
 

@@ -18,6 +18,10 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - run: npm run check:data
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
       - run: npm run build:cf
       - name: Ensure Cloudflare Pages project
         env:

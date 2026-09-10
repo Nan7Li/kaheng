@@ -18,11 +18,13 @@ function Home() {
   const spend = useDesk((s) => s.spend);
   const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const scene = useDesk((s) => s.scene);
   const all = useCatalog((s) => s.cards);
-  const input = { spend, bill, tier };
+  const input = { spend, bill, tier, includePhysicalFee };
 
   const live = all.filter((c) => c.status === "active");
+  const officiallyVerified = live.filter((c) => c.verification === "official").length;
   const archive = all.filter((c) => c.status === "shutdown");
   const pool = live.filter((c) => matchesScene(c, scene));
   const ranked = [...pool]
@@ -33,10 +35,10 @@ function Home() {
 
   return (
     <Page>
-      <LargeTitle eyebrow={`${DATA_AS_OF} · ${live.length} 张在运营`}>对照</LargeTitle>
+      <LargeTitle eyebrow={`${DATA_AS_OF} · ${officiallyVerified} 张官方已核`}>对照</LargeTitle>
       <Fade>
         <p className="mb-5 max-w-md text-[17px] leading-relaxed text-muted">
-          每刷一千美金，你到底赚还是亏。返现条款里的封顶和换汇，会把 10% 变成负数。费率不对就去管理页改。
+          每刷一千美金，你到底赚还是亏。只把带出处的官方条款当成可信基线；未核验条目只作线索。
         </p>
       </Fade>
 

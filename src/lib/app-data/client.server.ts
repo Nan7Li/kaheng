@@ -278,7 +278,9 @@ function tokenIdentityKey(token: string): string {
             .digest("base64url");
         }
       }
-    } catch {}
+    } catch {
+      // Not a JWT-shaped token; hash the opaque token below.
+    }
   }
   return createHash("sha256").update(token).digest("base64url");
 }

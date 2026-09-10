@@ -8,12 +8,14 @@ interface DeskState {
   spend: number;
   bill: Bill;
   tier: Tier;
+  includePhysicalFee: boolean;
   scene: Scene | "all";
   selected: string[];
   saved: string[];
   setSpend: (n: number) => void;
   setBill: (b: Bill) => void;
   setTier: (t: Tier) => void;
+  setIncludePhysicalFee: (v: boolean) => void;
   setScene: (s: Scene | "all") => void;
   toggleSelected: (slug: string) => void;
   clearSelected: () => void;
@@ -24,6 +26,7 @@ export const useDesk = create<DeskState>()((set, get) => ({
   spend: 1000,
   bill: "usd",
   tier: "entry",
+  includePhysicalFee: false,
   scene: "all",
   selected: [],
   saved: [],
@@ -39,6 +42,10 @@ export const useDesk = create<DeskState>()((set, get) => ({
   setTier: (tier) => {
     if (get().tier === tier) return;
     set({ tier });
+  },
+  setIncludePhysicalFee: (includePhysicalFee) => {
+    if (get().includePhysicalFee === includePhysicalFee) return;
+    set({ includePhysicalFee });
   },
   setScene: (scene) => {
     if (get().scene === scene) return;

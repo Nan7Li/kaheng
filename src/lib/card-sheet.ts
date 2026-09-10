@@ -11,8 +11,9 @@ import {
   type Status,
   type Tint,
   type UCard,
-} from "@/data/cards";
-import { createBlankCard, normalizeCard } from "@/lib/catalog";
+  type Verification,
+} from "../data/cards.ts";
+import { createBlankCard, normalizeCard } from "./catalog.ts";
 
 export const SHEET_HEADER = `# 卡衡单卡 v1
 # 把整段复制发给其他 AI 核对或修改，改完原样贴回即可导入。
@@ -68,6 +69,7 @@ BIN号: ${bin.binCode}
 年费: ${card.annualFeeUsd}
 月费: ${card.monthlyFeeUsd}
 充值费: ${card.topupFeePct}
+币种转换费: ${card.cryptoConversionFeePct ?? 0}
 消费费: ${card.spendFeePct}
 活动消费费: ${numOrEmpty(card.promoSpendFeePct)}
 活动截止: ${card.promoUntil ?? ""}
@@ -86,6 +88,9 @@ FX: ${card.fxFeePct}
 最适合: ${card.bestFor ?? ""}
 停服日期: ${card.shutdownDate ?? ""}
 更新: ${card.updatedAt ?? ""}
+核验级别: ${card.verification ?? "unverified"}
+核验日期: ${card.verifiedAt ?? ""}
+来源链接: ${(card.sourceUrls ?? []).join(" | ")}
 优点:
 ${pros}
 缺点:
@@ -205,7 +210,7 @@ export function parseCardSheet(text: string): UCard {
     custody: ["custodial", "self-custody", "hybrid"].includes(custody) ? custody : base.custody,
     kyc: ["none", "basic", "id", "passport", "full"].includes(kyc) ? kyc : base.kyc,
     kycNote: g("KYC说明"),
-    regions: (splitList(g("地区")) as Region[]) || base.regions,
+    regions: splitList(g("地区")).length ? (splitList(g("地区")) as Region[]) : base.regions,
     applePay: parseBool(g("Apple Pay"), base.applePay),
     googlePay: parseBool(g("Google Pay"), base.googlePay),
     tint: ["sage", "slate", "stone", "olive", "ink", "paper"].includes(tint) ? tint : base.tint,
@@ -217,6 +222,7 @@ export function parseCardSheet(text: string): UCard {
     annualFeeUsd: parseNum(g("年费")),
     monthlyFeeUsd: parseNum(g("月费")),
     topupFeePct: parseNum(g("充值费")),
+    cryptoConversionFeePct: parseNum(g("币种转换费")),
     spendFeePct: parseNum(g("消费费")),
     promoSpendFeePct: g("活动消费费") === "" ? undefined : parseNum(g("活动消费费")),
     promoUntil: g("活动截止") || undefined,
@@ -237,6 +243,14 @@ export function parseCardSheet(text: string): UCard {
     bestFor: g("最适合"),
     shutdownDate: g("停服日期") || undefined,
     updatedAt: g("更新") || base.updatedAt,
+    verification: (["official", "partial", "secondary", "unverified"].includes(g("核验级别"))
+      ? g("核验级别")
+      : "unverified") as Verification,
+    verifiedAt: g("核验日期") || undefined,
+    sourceUrls: g("来源链接")
+      .split("|")
+      .map((url) => url.trim())
+      .filter(Boolean),
     pros: pros ?? base.pros,
     cons: cons ?? base.cons,
   };

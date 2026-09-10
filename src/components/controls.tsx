@@ -12,10 +12,12 @@ export function DeskControls({ dense = false }: { dense?: boolean }) {
   const spend = useDesk((s) => s.spend);
   const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const scene = useDesk((s) => s.scene);
   const setSpend = useDesk((s) => s.setSpend);
   const setBill = useDesk((s) => s.setBill);
   const setTier = useDesk((s) => s.setTier);
+  const setIncludePhysicalFee = useDesk((s) => s.setIncludePhysicalFee);
   const setScene = useDesk((s) => s.setScene);
   const sliderValue = useMemo(() => [Math.min(spend, 10000)], [spend]);
 
@@ -59,6 +61,14 @@ export function DeskControls({ dense = false }: { dense?: boolean }) {
         options={[
           { value: "entry", label: "入门档" },
           { value: "boost", label: "进阶档" },
+        ]}
+      />
+      <Segmented<"virtual" | "physical">
+        value={includePhysicalFee ? "physical" : "virtual"}
+        onChange={(value) => setIncludePhysicalFee(value === "physical")}
+        options={[
+          { value: "virtual", label: "只算虚拟卡" },
+          { value: "physical", label: "含实体卡费" },
         ]}
       />
       <div className="flex flex-wrap gap-1.5">

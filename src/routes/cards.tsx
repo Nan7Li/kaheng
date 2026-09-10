@@ -5,6 +5,7 @@ import { DeskControls } from "@/components/controls";
 import { Chip, Fade, LargeTitle, Page } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { CardThumb } from "@/components/plastic-card";
+import { VerificationBadge } from "@/components/data-confidence";
 import {
   CATEGORY_LABEL,
   KYC_LABEL,
@@ -27,6 +28,7 @@ function CardsPage() {
   const spend = useDesk((s) => s.spend);
   const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const scene = useDesk((s) => s.scene);
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
@@ -38,14 +40,17 @@ function CardsPage() {
   const [tw, setTw] = useState(false);
   const [usBin, setUsBin] = useState(false);
   const [hkBin, setHkBin] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [sort, setSort] = useState<SortKey>("net");
   const [q, setQ] = useState("");
 
-  const input = { spend, bill, tier };
-  const active = all.filter((c) => c.status !== "shutdown");
-  const archive = all.filter((c) => c.status === "shutdown");
-
+  const input = useMemo(
+    () => ({ spend, bill, tier, includePhysicalFee }),
+    [spend, bill, tier, includePhysicalFee],
+  );
   const rows = useMemo(() => {
+    const active = all.filter((c) => c.status !== "shutdown");
+    const archive = all.filter((c) => c.status === "shutdown");
     let list: UCard[] =
       status === "archive"
         ? archive
@@ -65,6 +70,7 @@ function CardsPage() {
         return b === "us" || b === "pr";
       });
     if (hkBin) list = list.filter((c) => resolveBin(c).binCountry === "hk");
+    if (verified) list = list.filter((c) => c.verification === "official");
     if (q.trim()) {
       const s = q.trim().toLowerCase();
       list = list.filter(
@@ -83,14 +89,18 @@ function CardsPage() {
 
     withResult.sort((a, b) => {
       if (sort === "risk") return b.card.risk - a.card.risk;
-      if (sort === "open") return a.card.openingFeeUsd - b.card.openingFeeUsd;
+      if (sort === "open") {
+        const aCost = a.card.openingFeeUsd + (includePhysicalFee ? a.card.physicalFeeUsd : 0);
+        const bCost = b.card.openingFeeUsd + (includePhysicalFee ? b.card.physicalFeeUsd : 0);
+        return aCost - bCost;
+      }
       if (!a.result || !b.result) return a.result ? -1 : 1;
       if (sort === "cashback") return b.result.cashback - a.result.cashback;
       if (sort === "fees") return a.result.fees - b.result.fees;
       return b.result.net - a.result.net;
     });
     return withResult;
-  }, [all, active, archive, status, category, apple, tw, usBin, hkBin, q, scene, spend, bill, tier, sort]);
+  }, [all, status, category, apple, tw, usBin, hkBin, verified, q, scene, input, sort, includePhysicalFee]);
 
   return (
     <Page>
@@ -137,6 +147,9 @@ function CardsPage() {
           <Chip on={hkBin} onClick={() => setHkBin((v) => !v)}>
             香港 BIN
           </Chip>
+          <Chip on={verified} onClick={() => setVerified((v) => !v)}>
+            官方已核
+          </Chip>
         </div>
         <div className="mb-4 flex flex-wrap gap-1.5">
           {(
@@ -181,9 +194,12 @@ function CardsPage() {
                   className="min-w-0 flex-1 py-1 pressable"
                 >
                   <p className="truncate text-[16px] font-medium">{card.name}</p>
-                  <p className="truncate text-[12px] text-subtle">
-                    {formatBin(card)} · {STATUS_LABEL[card.status]} · {KYC_LABEL[card.kyc]}
-                  </p>
+                  <div className="flex items-center gap-1.5 truncate text-[12px] text-subtle">
+                    <span className="truncate">
+                      {formatBin(card)} · {STATUS_LABEL[card.status]} · {KYC_LABEL[card.kyc]}
+                    </span>
+                    <VerificationBadge card={card} compact />
+                  </div>
                 </Link>
                 {result ? (
                   <NetFigure value={result.net} />

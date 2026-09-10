@@ -7,11 +7,13 @@ export interface CalcInput {
   spend: number;
   bill: Bill;
   tier: Tier;
+  includePhysicalFee?: boolean;
 }
 
 export interface CalcResult {
   cashback: number;
   topup: number;
+  conversion: number;
   spendFee: number;
   fx: number;
   amortized: number;
@@ -40,6 +42,7 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
     ? n(card.promoSpendFeePct ?? card.spendFeePct)
     : n(card.spendFeePct);
   const topupPct = n(card.topupFeePct);
+  const conversionPct = n(card.cryptoConversionFeePct);
   const fxPct = input.bill === "local" ? n(card.fxFeePct) : 0;
 
   const cashbackPctUsed = input.tier === "boost" ? n(card.cashbackPctHigh) : n(card.cashbackPct);
@@ -52,16 +55,23 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   if (amountCap != null) cashback = Math.min(cashback, n(amountCap));
 
   const topup = (spend * topupPct) / 100;
+  const conversion = (spend * conversionPct) / 100;
   const spendFee = (spend * spendFeePctUsed) / 100;
   const fx = (spend * fxPct) / 100;
-  const amortized = n(card.openingFeeUsd) / 12 + n(card.monthlyFeeUsd) + n(card.annualFeeUsd) / 12;
-  const fees = topup + spendFee + fx + amortized;
+  const includePhysicalFee = input.includePhysicalFee || card.form === "physical";
+  const amortized =
+    n(card.openingFeeUsd) / 12 +
+    (includePhysicalFee ? n(card.physicalFeeUsd) / 12 : 0) +
+    n(card.monthlyFeeUsd) +
+    n(card.annualFeeUsd) / 12;
+  const fees = topup + conversion + spendFee + fx + amortized;
   const net = cashback - fees;
   const netPct = spend === 0 ? 0 : (net / spend) * 100;
 
   return {
     cashback,
     topup,
+    conversion,
     spendFee,
     fx,
     amortized,

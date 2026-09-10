@@ -28,7 +28,13 @@ function scoreCard(card: UCard, a: Q1, b: Q2, c: Q3, d: Q4): number {
   s += net / 8;
   if (c === "easy" && (card.kyc === "none" || card.kyc === "basic" || card.kyc === "passport")) s += 2;
   if (c === "hard" && card.kyc === "full") s -= 3;
-  if (d === "fee") s += 4 - (card.topupFeePct + card.spendFeePct + card.fxFeePct);
+  if (d === "fee")
+    s +=
+      4 -
+      (card.topupFeePct +
+        (card.cryptoConversionFeePct ?? 0) +
+        card.spendFeePct +
+        card.fxFeePct);
   if (d === "reward") s += card.cashbackPctHigh;
   if (d === "custody" && card.custody === "self-custody") s += 5;
   if (d === "custody" && card.custody === "hybrid") s += 2;

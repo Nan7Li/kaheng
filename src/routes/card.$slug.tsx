@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, GitCompareArrows, Pencil } from "lucide-react";
 import { FeeStack } from "@/components/fee-stack";
+import { SourcePanel } from "@/components/data-confidence";
 import { Fade, Group, LargeTitle, Page, Row } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { PlasticCard } from "@/components/plastic-card";
@@ -25,6 +26,7 @@ function CardDetail() {
   const spend = useDesk((s) => s.spend);
   const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
 
@@ -41,7 +43,10 @@ function CardDetail() {
     );
   }
 
-  const result = card.status === "shutdown" ? null : calcCard(card, { spend, bill, tier });
+  const result =
+    card.status === "shutdown"
+      ? null
+      : calcCard(card, { spend, bill, tier, includePhysicalFee });
   const facts: Array<[string, string]> = [
     ["卡 BIN", formatBin(card)],
     ["卡组织", card.network ? card.network.toUpperCase() : "—"],
@@ -52,7 +57,9 @@ function CardDetail() {
     ["Apple Pay", card.applePay ? "支持" : "不支持"],
     ["Google Pay", card.googlePay ? "支持" : "不支持"],
     ["开卡费", `$${card.openingFeeUsd ?? 0}`],
+    ["实体卡费", `$${card.physicalFeeUsd ?? 0}`],
     ["充值费", `${card.topupFeePct ?? 0}%`],
+    ["币种转换", `${card.cryptoConversionFeePct ?? 0}%`],
     ["消费费", `${card.spendFeePct ?? 0}%`],
     ["FX", `${card.fxFeePct ?? 0}%`],
     ["入门返现", `${card.cashbackPct ?? 0}%`],
@@ -79,7 +86,7 @@ function CardDetail() {
           <div className="px-4 py-4">
             <p className="text-[12px] text-subtle">
               ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} ·{" "}
-              {tier === "entry" ? "入门档" : "进阶档"}
+              {tier === "entry" ? "入门档" : "进阶档"} · {includePhysicalFee ? "含实体卡费" : "仅虚拟卡"}
             </p>
             <div className="mt-1">
               <NetFigure value={result.net} size="lg" />
@@ -125,6 +132,10 @@ function CardDetail() {
             </Row>
           </div>
         ))}
+      </Group>
+
+      <Group header="数据可信度">
+        <SourcePanel card={card} />
       </Group>
 
       <Group header="优点">

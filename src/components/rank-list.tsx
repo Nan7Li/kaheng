@@ -7,6 +7,7 @@ import { useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { NetFigure } from "@/components/net-figure";
 import { CardThumb } from "@/components/plastic-card";
+import { VerificationBadge } from "@/components/data-confidence";
 
 export function RankList({
   cards,
@@ -42,10 +43,13 @@ export function RankList({
               className="min-w-0 flex-1 py-1.5 pressable"
             >
               <p className="truncate text-[16px] font-medium">{row.card.name}</p>
-              <p className="truncate text-[12px] text-subtle">
-                {formatBin(row.card)}
-                {row.card.status === "restricted" ? ` · ${STATUS_LABEL.restricted}` : ""}
-              </p>
+              <div className="flex items-center gap-1.5 truncate text-[12px] text-subtle">
+                <span className="truncate">
+                  {formatBin(row.card)}
+                  {row.card.status === "restricted" ? ` · ${STATUS_LABEL.restricted}` : ""}
+                </span>
+                <VerificationBadge card={row.card} compact />
+              </div>
             </Link>
             <NetFigure value={row.result.net} />
             <button

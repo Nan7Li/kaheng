@@ -6,6 +6,7 @@ export function FeeStack({ result }: { result: CalcResult }) {
   const parts = [
     { key: "返现", value: result.cashback, tone: "gain" as const },
     { key: "充值", value: -result.topup, tone: "loss" as const },
+    { key: "币种转换", value: -result.conversion, tone: "loss" as const },
     { key: "消费费", value: -result.spendFee, tone: "loss" as const },
     { key: "FX", value: -result.fx, tone: "loss" as const },
     { key: "摊销", value: -result.amortized, tone: "loss" as const },

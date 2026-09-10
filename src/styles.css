@@ -19,9 +19,9 @@
   --color-glass: rgba(255, 255, 255, 0.58);
   --color-knob: #ffffff;
 
-  --font-sans: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+  --font-sans: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "Segoe UI", sans-serif;
-  --font-serif: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "SF Pro Display",
+  --font-serif: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "SF Pro Display",
     "Segoe UI", sans-serif;
   --font-mono: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
 
