@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { GitCompareArrows } from "lucide-react";
 import type { UCard } from "@/data/cards";
-import { STATUS_LABEL } from "@/data/cards";
+import { formatBin, STATUS_LABEL } from "@/data/cards";
 import { calcCard, type CalcInput } from "@/lib/calc";
 import { useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { NetFigure } from "@/components/net-figure";
+import { CardThumb } from "@/components/plastic-card";
 
 export function RankList({
   cards,
@@ -34,6 +35,7 @@ export function RankList({
             <span className="w-6 text-center font-mono text-[11px] tabular-nums text-subtle">
               {i + 1}
             </span>
+            <CardThumb card={row.card} className="size-9 shrink-0 rounded-[10px]" />
             <Link
               to="/card/$slug"
               params={{ slug: row.card.slug }}
@@ -41,7 +43,8 @@ export function RankList({
             >
               <p className="truncate text-[16px] font-medium">{row.card.name}</p>
               <p className="truncate text-[12px] text-subtle">
-                {row.card.status === "restricted" ? STATUS_LABEL.restricted : row.card.bestFor}
+                {formatBin(row.card)}
+                {row.card.status === "restricted" ? ` · ${STATUS_LABEL.restricted}` : ""}
               </p>
             </Link>
             <NetFigure value={row.result.net} />

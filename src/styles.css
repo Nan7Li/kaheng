@@ -115,6 +115,67 @@
   transform: scale(0.96);
 }
 
+.ios-enter > * {
+  animation: ios-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ios-enter > *:nth-child(1) { animation-delay: 10ms; }
+.ios-enter > *:nth-child(2) { animation-delay: 55ms; }
+.ios-enter > *:nth-child(3) { animation-delay: 100ms; }
+.ios-enter > *:nth-child(4) { animation-delay: 145ms; }
+.ios-enter > *:nth-child(5) { animation-delay: 190ms; }
+.ios-enter > *:nth-child(6) { animation-delay: 235ms; }
+.ios-enter > *:nth-child(7) { animation-delay: 280ms; }
+.ios-enter > *:nth-child(8) { animation-delay: 325ms; }
+.ios-enter > *:nth-child(n + 9) { animation-delay: 360ms; }
+
+@keyframes ios-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.plastic-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --lx: 50%;
+  --ly: 28%;
+  transform: perspective(920px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 18px 36px rgba(15, 15, 20, 0.22);
+  will-change: transform;
+}
+.plastic-card::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    120% 80% at var(--lx) var(--ly),
+    rgba(255, 255, 255, 0.28),
+    transparent 42%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.tab-pill {
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.seg-pill {
+  transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 [data-tint="sage"] {
   --card-face: #1b221c;
   --card-ink: #dce4d6;

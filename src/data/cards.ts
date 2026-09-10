@@ -7,6 +7,19 @@ export type Category = "exchange" | "wallet" | "defi" | "vcc";
 export type Scene = "ai" | "daily" | "apple" | "ads" | "offramp";
 export type Tint = "sage" | "slate" | "stone" | "olive" | "ink" | "paper";
 export type Region = "tw" | "hk" | "cn" | "eea" | "us" | "global" | "apac";
+export type BinCountry =
+  | "us"
+  | "hk"
+  | "uk"
+  | "sg"
+  | "ch"
+  | "eea"
+  | "pr"
+  | "au"
+  | "ge"
+  | "kz"
+  | "mixed"
+  | "unknown";
 
 export interface UCard {
   slug: string;
@@ -25,6 +38,10 @@ export interface UCard {
   applePay: boolean;
   googlePay: boolean;
   tint: Tint;
+  binCountry?: BinCountry;
+  binCode?: string;
+  binIssuer?: string;
+  faceUrl?: string;
   openingFeeUsd: number;
   physicalFeeUsd: number;
   annualFeeUsd: number;
@@ -1093,3 +1110,107 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   defi: "链上",
   vcc: "虚拟卡平台",
 };
+
+export const BIN_COUNTRY_LABEL: Record<BinCountry, string> = {
+  us: "美国 BIN",
+  hk: "香港 BIN",
+  uk: "英国 BIN",
+  sg: "新加坡 BIN",
+  ch: "瑞士 BIN",
+  eea: "欧洲 BIN",
+  pr: "美区 BIN（波多黎各）",
+  au: "澳洲 BIN",
+  ge: "格鲁吉亚 BIN",
+  kz: "哈萨克 BIN",
+  mixed: "多地 BIN",
+  unknown: "BIN 未标注",
+};
+
+export const BIN_SEED: Record<
+  string,
+  { binCountry: BinCountry; binCode?: string; binIssuer?: string }
+> = {
+  mexc: { binCountry: "mixed", binIssuer: "亚太通道" },
+  etherfi: { binCountry: "uk", binIssuer: "Rain" },
+  okx: { binCountry: "eea", binIssuer: "欧洲发卡" },
+  bybit: { binCountry: "ge", binIssuer: "格鲁吉亚通道" },
+  kast: { binCountry: "mixed" },
+  jupiter: { binCountry: "us", binIssuer: "Rain / DCS" },
+  bitget: { binCountry: "ch", binIssuer: "Fiat24 / 亚太" },
+  redotpay: { binCountry: "hk", binIssuer: "香港" },
+  cryptocom: { binCountry: "mixed", binIssuer: "多地实体" },
+  coinbase: { binCountry: "us", binIssuer: "美国" },
+  nexo: { binCountry: "eea", binIssuer: "欧洲" },
+  solayer: { binCountry: "pr", binIssuer: "美区（波多黎各）", binCode: "454924" },
+  pionex: { binCountry: "mixed", binIssuer: "亚太" },
+  gnosis: { binCountry: "eea", binIssuer: "欧洲" },
+  tria: { binCountry: "mixed" },
+  pokepay: { binCountry: "us", binIssuer: "美国 MSB", binCode: "559666" },
+  kucard: { binCountry: "mixed", binIssuer: "亚太" },
+  plasma: { binCountry: "us", binIssuer: "美区通道" },
+  wildcard: { binCountry: "hk", binIssuer: "香港" },
+  dupay: { binCountry: "hk", binIssuer: "香港" },
+  onekey: { binCountry: "mixed", binIssuer: "上游通道" },
+  infini: { binCountry: "unknown" },
+  wirex: { binCountry: "eea", binIssuer: "欧洲" },
+  safepal: { binCountry: "ch", binIssuer: "Fiat24 瑞士" },
+  kbin: { binCountry: "mixed", binIssuer: "视卡段，请在管理页填写" },
+};
+
+export function resolveBin(card: UCard): {
+  binCountry: BinCountry;
+  binCode?: string;
+  binIssuer?: string;
+} {
+  const seed = BIN_SEED[card.slug];
+  return {
+    binCountry: card.binCountry ?? seed?.binCountry ?? "unknown",
+    binCode: card.binCode || seed?.binCode,
+    binIssuer: card.binIssuer || seed?.binIssuer,
+  };
+}
+
+export function formatBin(card: UCard): string {
+  const b = resolveBin(card);
+  const place = BIN_COUNTRY_LABEL[b.binCountry];
+  const short = place.replace(" BIN", "").replace("（波多黎各）", "");
+  const bits = [place];
+  if (b.binIssuer && !place.includes(b.binIssuer) && !b.binIssuer.includes(short.trim())) {
+    bits.push(b.binIssuer);
+  }
+  if (b.binCode) bits.push(b.binCode);
+  return bits.join(" · ");
+}
+
+const HAS_FACE = new Set([
+  "mexc",
+  "etherfi",
+  "okx",
+  "bybit",
+  "kast",
+  "jupiter",
+  "bitget",
+  "redotpay",
+  "cryptocom",
+  "coinbase",
+  "nexo",
+  "solayer",
+  "pionex",
+  "gnosis",
+  "tria",
+  "pokepay",
+  "kucard",
+  "plasma",
+  "wildcard",
+  "dupay",
+  "onekey",
+  "infini",
+  "wirex",
+  "safepal",
+]);
+
+export function faceSrc(card: Pick<UCard, "slug" | "faceUrl">): string | undefined {
+  if (card.faceUrl) return card.faceUrl;
+  if (card.slug && HAS_FACE.has(card.slug)) return `/faces/${card.slug}.jpg`;
+  return undefined;
+}

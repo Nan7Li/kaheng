@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -9,8 +10,14 @@ export function Page({
   children: ReactNode;
   className?: string;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <div className={cn("mx-auto w-full max-w-2xl px-4 pt-2 pb-36", className)}>{children}</div>
+    <div
+      key={pathname}
+      className={cn("ios-enter mx-auto w-full max-w-2xl px-4 pt-2 pb-36", className)}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -181,18 +188,29 @@ export function Segmented<T extends string>({
   options: Array<{ value: T; label: string }>;
   id?: string;
 }) {
+  const i = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  );
+  const n = Math.max(1, options.length);
   return (
-    <div className="flex rounded-full bg-surface-2 p-1">
+    <div className="relative flex rounded-full bg-surface-2 p-1">
+      <div
+        className="seg-pill pointer-events-none absolute top-1 bottom-1 rounded-full bg-surface shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
+        style={{
+          width: `calc((100% - 8px) / ${n})`,
+          left: 4,
+          transform: `translateX(${i * 100}%)`,
+        }}
+      />
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "h-8 flex-1 rounded-full px-2 text-[12px] font-semibold transition-colors duration-200",
-            value === opt.value
-              ? "bg-surface text-fg shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-              : "text-muted",
+            "relative z-10 h-8 flex-1 rounded-full px-2 text-[12px] font-semibold transition-colors duration-200",
+            value === opt.value ? "text-fg" : "text-muted",
           )}
         >
           {opt.label}

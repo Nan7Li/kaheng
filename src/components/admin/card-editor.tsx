@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Area, Divider, Field, Group, Row, Segmented } from "@/components/ios";
@@ -6,7 +7,9 @@ import { PlasticCard } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
+  BIN_COUNTRY_LABEL,
   SCENE_LABEL,
+  type BinCountry,
   type Category,
   type Custody,
   type FormFactor,
@@ -17,12 +20,15 @@ import {
   type Status,
   type Tint,
   type UCard,
+  resolveBin,
 } from "@/data/cards";
 import { useCatalog } from "@/lib/catalog";
+import { compressFace } from "@/lib/face";
 
 const SCENES: Scene[] = ["ai", "daily", "apple", "ads", "offramp"];
 const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "us", "eea", "global"];
 const TINTS: Tint[] = ["sage", "slate", "stone", "olive", "ink", "paper"];
+const BINS = Object.keys(BIN_COUNTRY_LABEL) as BinCountry[];
 
 function num(v: string): number {
   const n = Number(v);
@@ -35,7 +41,13 @@ function nullable(v: string): number | null {
 }
 
 export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean }) {
-  const [draft, setDraft] = useState<UCard>(initial);
+  const seedBin = resolveBin(initial);
+  const [draft, setDraft] = useState<UCard>({
+    ...initial,
+    binCountry: seedBin.binCountry,
+    binCode: seedBin.binCode ?? "",
+    binIssuer: seedBin.binIssuer ?? "",
+  });
   const upsert = useCatalog((s) => s.upsert);
   const remove = useCatalog((s) => s.remove);
   const navigate = useNavigate();
@@ -80,6 +92,49 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         <PlasticCard card={draft} />
       </div>
 
+      <Group
+        header="卡面照片"
+        footer="上传会压成卡比例保存在这台设备。也可以贴图片链接。"
+      >
+        <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-2 pressable">
+          <ImagePlus className="size-5 text-accent" />
+          <span className="text-[16px] text-accent">从相册选取</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              void compressFace(file)
+                .then((url) => patch("faceUrl", url))
+                .catch(() => toast.error("图片读不出来"));
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <Divider />
+        <Field
+          label="图片链接"
+          value={draft.faceUrl && !draft.faceUrl.startsWith("data:") ? draft.faceUrl : ""}
+          onChange={(v) => patch("faceUrl", v || undefined)}
+          placeholder="https://…"
+          type="url"
+        />
+        {draft.faceUrl && (
+          <>
+            <Divider />
+            <button
+              type="button"
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-loss pressable"
+              onClick={() => patch("faceUrl", undefined)}
+            >
+              恢复默认卡面
+            </button>
+          </>
+        )}
+      </Group>
+
       <Group header="基本">
         <Field label="中文名" value={draft.name} onChange={(v) => patch("name", v)} />
         <Divider />
@@ -99,6 +154,42 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
           value={draft.url ?? ""}
           onChange={(v) => patch("url", v || undefined)}
           type="url"
+        />
+      </Group>
+
+      <Group header="卡 BIN" footer="BIN 是卡号前几位对应的发卡地。订 ChatGPT、绑 Apple ID 时，美区 / 香港差很多。">
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">发卡地</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BINS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                onClick={() => patch("binCountry", b)}
+                className={
+                  (draft.binCountry ?? "unknown") === b
+                    ? "h-8 rounded-full bg-accent px-3 text-[13px] font-medium text-accent-fg pressable"
+                    : "h-8 rounded-full bg-surface-2 px-3 text-[13px] font-medium text-muted pressable"
+                }
+              >
+                {BIN_COUNTRY_LABEL[b].replace(" BIN", "")}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Divider />
+        <Field
+          label="BIN 号"
+          value={draft.binCode ?? ""}
+          onChange={(v) => patch("binCode", v || undefined)}
+          placeholder="454924"
+        />
+        <Divider />
+        <Field
+          label="发卡行"
+          value={draft.binIssuer ?? ""}
+          onChange={(v) => patch("binIssuer", v || undefined)}
+          placeholder="Rain / Fiat24 / 香港"
         />
       </Group>
 

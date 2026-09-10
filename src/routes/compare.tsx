@@ -5,7 +5,7 @@ import { Divider, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { PlasticCard } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
-import { CUSTODY_LABEL, KYC_LABEL, STATUS_LABEL, type UCard } from "@/data/cards";
+import { CUSTODY_LABEL, KYC_LABEL, STATUS_LABEL, formatBin, type UCard } from "@/data/cards";
 import { calcCard } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
 import { useDesk } from "@/lib/store";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/compare")({ component: ComparePage });
 
 const ROWS: Array<{ label: string; render: (c: UCard) => string }> = [
   { label: "发行方", render: (c) => c.issuer || "—" },
+  { label: "卡 BIN", render: (c) => formatBin(c) },
   { label: "网络", render: (c) => (c.network ? c.network.toUpperCase() : "—") },
   {
     label: "形态",

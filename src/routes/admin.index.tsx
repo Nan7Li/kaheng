@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Fade, Group, LargeTitle, Page } from "@/components/ios";
+import { CardThumb } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
-import { STATUS_LABEL } from "@/data/cards";
+import { STATUS_LABEL, formatBin } from "@/data/cards";
 import { exportCatalog, useCatalog } from "@/lib/catalog";
 
 export const Route = createFileRoute("/admin/")({ component: AdminPage });
@@ -68,15 +69,11 @@ function AdminPage() {
               params={{ slug: card.slug }}
               className="flex min-h-14 items-center gap-3 px-3 py-2 pressable"
             >
-              <span
-                data-tint={card.tint}
-                className="size-10 shrink-0 rounded-[12px]"
-                style={{ background: "var(--card-face)" }}
-              />
+              <CardThumb card={card} className="size-10 shrink-0 rounded-[12px]" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[16px] font-medium">{card.name}</p>
                 <p className="truncate text-[12px] text-subtle">
-                  {card.issuer || "未填发行方"} · {STATUS_LABEL[card.status] ?? card.status}
+                  {formatBin(card)} · {STATUS_LABEL[card.status] ?? card.status}
                 </p>
               </div>
               <ChevronRight className="size-4 text-subtle/70" />

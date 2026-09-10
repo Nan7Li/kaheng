@@ -11,6 +11,7 @@ import {
   KYC_LABEL,
   SCENE_LABEL,
   STATUS_LABEL,
+  formatBin,
 } from "@/data/cards";
 import { calcCard } from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
@@ -42,6 +43,7 @@ function CardDetail() {
 
   const result = card.status === "shutdown" ? null : calcCard(card, { spend, bill, tier });
   const facts: Array<[string, string]> = [
+    ["卡 BIN", formatBin(card)],
     ["卡组织", card.network ? card.network.toUpperCase() : "—"],
     ["形态", card.form === "both" ? "虚拟 + 实体" : card.form === "virtual" ? "仅虚拟" : "实体为主"],
     ["托管", CUSTODY_LABEL[card.custody] ?? "—"],
