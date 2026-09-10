@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { CARDS, type UCard } from "@/data/cards";
 
 const KEY = "kaheng-catalog-v1";
+/** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
+export const SEED_REVISION = 2;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -11,7 +13,7 @@ function asNum(v: unknown, fallback = 0): number {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-function normalizeCard(raw: unknown): UCard | null {
+export function normalizeCard(raw: unknown): UCard | null {
   if (!raw || typeof raw !== "object") return null;
   const c = raw as Partial<UCard>;
   if (typeof c.slug !== "string" || !c.slug) return null;
@@ -45,13 +47,30 @@ function normalizeCard(raw: unknown): UCard | null {
   };
 }
 
-function readStored(): UCard[] | null {
+function mergeSeed(stored: UCard[]): UCard[] {
+  const bySlug = new Map(stored.map((c) => [c.slug, c]));
+  const seedSlugs = new Set(CARDS.map((c) => c.slug));
+  const next = CARDS.map((seed) => {
+    const old = bySlug.get(seed.slug);
+    if (!old) return { ...seed };
+    return {
+      ...seed,
+      faceUrl: old.faceUrl || seed.faceUrl,
+      binCountry: old.binCountry ?? seed.binCountry,
+      binCode: old.binCode || seed.binCode,
+      binIssuer: old.binIssuer || seed.binIssuer,
+    };
+  });
+  return [...next, ...stored.filter((c) => !seedSlugs.has(c.slug))];
+}
+
+function readStored(): { cards: UCard[]; seedRevision: number } | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
-    const cards = Array.isArray(parsed)
+    const cardsRaw = Array.isArray(parsed)
       ? parsed
       : parsed &&
           typeof parsed === "object" &&
@@ -61,9 +80,14 @@ function readStored(): UCard[] | null {
           "cards" in parsed.state
         ? (parsed.state as { cards: unknown }).cards
         : null;
-    if (!Array.isArray(cards)) return null;
-    const normalized = cards.map(normalizeCard).filter((c): c is UCard => Boolean(c));
-    return normalized.length ? normalized : null;
+    if (!Array.isArray(cardsRaw)) return null;
+    const normalized = cardsRaw.map(normalizeCard).filter((c): c is UCard => Boolean(c));
+    if (!normalized.length) return null;
+    const seedRevision =
+      parsed && typeof parsed === "object" && "seedRevision" in parsed
+        ? Number((parsed as { seedRevision: unknown }).seedRevision) || 0
+        : 0;
+    return { cards: normalized, seedRevision };
   } catch {
     return null;
   }
@@ -72,7 +96,10 @@ function readStored(): UCard[] | null {
 function writeStored(cards: UCard[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(KEY, JSON.stringify({ state: { cards }, version: 0 }));
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ state: { cards }, version: 0, seedRevision: SEED_REVISION }),
+    );
   } catch {
     /* quota */
   }
@@ -136,7 +163,12 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
   cards: cloneCards(),
   hydrated: false,
   upsert: (card) => {
-    const next = { ...card, updatedAt: new Date().toISOString().slice(0, 7) };
+    const existing = get().cards.find((c) => c.slug === card.slug);
+    const next = {
+      ...card,
+      faceUrl: card.faceUrl || existing?.faceUrl,
+      updatedAt: new Date().toISOString().slice(0, 7),
+    };
     const cards = get().cards;
     const i = cards.findIndex((c) => c.slug === next.slug);
     const updated = i === -1 ? [next, ...cards] : cards.map((c) => (c.slug === next.slug ? next : c));
@@ -161,7 +193,17 @@ export const useCatalog = create<CatalogState>()((set, get) => ({
   hydrate: () => {
     if (get().hydrated) return;
     const stored = readStored();
-    set(stored ? { cards: stored, hydrated: true } : { hydrated: true });
+    if (!stored) {
+      set({ hydrated: true });
+      return;
+    }
+    if (stored.seedRevision < SEED_REVISION) {
+      const cards = mergeSeed(stored.cards);
+      writeStored(cards);
+      set({ cards, hydrated: true });
+      return;
+    }
+    set({ cards: stored.cards, hydrated: true });
   },
 }));
 

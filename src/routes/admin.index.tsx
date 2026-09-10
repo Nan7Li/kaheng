@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Plus } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Fade, Group, LargeTitle, Page } from "@/components/ios";
+import { Divider, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { CardThumb } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, formatBin } from "@/data/cards";
+import { parseImportPayload } from "@/lib/card-sheet";
 import { exportCatalog, useCatalog } from "@/lib/catalog";
 
 export const Route = createFileRoute("/admin/")({ component: AdminPage });
@@ -13,28 +15,37 @@ function AdminPage() {
   const cards = useCatalog((s) => s.cards);
   const reset = useCatalog((s) => s.reset);
   const replaceAll = useCatalog((s) => s.replaceAll);
+  const upsert = useCatalog((s) => s.upsert);
   const navigate = useNavigate();
+  const [paste, setPaste] = useState("");
 
   function onReset() {
-    if (!confirm("恢复内置资料？你改过的内容会从这台设备上消失。")) return;
+    if (!confirm("恢复内置资料？你改过的内容会从这台设备上消失。自定义卡也会没。")) return;
     reset();
     toast.success("已恢复内置资料");
   }
 
+  function applyText(text: string) {
+    try {
+      const payload = parseImportPayload(text);
+      if (payload.mode === "all") {
+        replaceAll(payload.cards);
+        toast.success(`已导入 ${payload.cards.length} 张卡`);
+        setPaste("");
+        return;
+      }
+      upsert(payload.card);
+      toast.success(`已写入「${payload.card.name}」`);
+      setPaste("");
+    } catch {
+      toast.error("文件格式不对。单卡用卡衡文本或 JSON 对象，整库用 JSON 数组。");
+    }
+  }
+
   function onImport(file: File) {
     const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result));
-        if (!Array.isArray(parsed) || parsed.some((c) => !c || typeof c.slug !== "string")) {
-          throw new Error("not array");
-        }
-        replaceAll(parsed);
-        toast.success(`已导入 ${parsed.length} 张卡`);
-      } catch {
-        toast.error("文件格式不对");
-      }
-    };
+    reader.onload = () => applyText(String(reader.result ?? ""));
+    reader.onerror = () => toast.error("文件读不出来");
     reader.readAsText(file);
   }
 
@@ -82,20 +93,38 @@ function AdminPage() {
         ))}
       </Group>
 
-      <Group header="资料">
-        <button
-          type="button"
-          onClick={() => exportCatalog(cards)}
-          className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
-        >
-          导出 JSON
-        </button>
-        <div className="ml-4 h-px bg-border" />
+      <Group
+        header="单卡文本"
+        footer="点进某一张卡也可以复制 / 下载。格式以「# 卡衡单卡 v1」开头，改完原样贴回即可。"
+      >
+        <label className="block px-4 py-3">
+          <span className="text-[13px] text-subtle">粘贴单卡文本或 JSON</span>
+          <textarea
+            value={paste}
+            onChange={(e) => setPaste(e.target.value)}
+            placeholder={"# 卡衡单卡 v1\n标识: …"}
+            rows={6}
+            className="mt-1.5 w-full resize-y bg-transparent font-mono text-[13px] leading-relaxed text-fg outline-none placeholder:text-subtle"
+          />
+        </label>
+        {paste.trim() && (
+          <>
+            <Divider />
+            <button
+              type="button"
+              onClick={() => applyText(paste)}
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+            >
+              导入这段文本
+            </button>
+          </>
+        )}
+        <Divider />
         <label className="flex min-h-12 w-full cursor-pointer items-center px-4 text-[16px] text-accent pressable">
-          从 JSON 导入
+          从文件导入（.txt / .json）
           <input
             type="file"
-            accept="application/json"
+            accept=".txt,.json,text/plain,application/json"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -104,7 +133,17 @@ function AdminPage() {
             }}
           />
         </label>
-        <div className="ml-4 h-px bg-border" />
+      </Group>
+
+      <Group header="整库">
+        <button
+          type="button"
+          onClick={() => exportCatalog(cards)}
+          className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+        >
+          导出全部 JSON
+        </button>
+        <Divider />
         <button
           type="button"
           onClick={onReset}

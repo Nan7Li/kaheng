@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ImagePlus } from "lucide-react";
+import { ClipboardPaste, Copy, Download, ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Area, Divider, Field, Group, Row, Segmented } from "@/components/ios";
@@ -22,6 +22,12 @@ import {
   type UCard,
   resolveBin,
 } from "@/data/cards";
+import {
+  copySheet,
+  downloadSheet,
+  parseImportPayload,
+  serializeCard,
+} from "@/lib/card-sheet";
 import { useCatalog } from "@/lib/catalog";
 import { compressFace } from "@/lib/face";
 
@@ -48,6 +54,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     binCode: seedBin.binCode ?? "",
     binIssuer: seedBin.binIssuer ?? "",
   });
+  const [paste, setPaste] = useState("");
   const upsert = useCatalog((s) => s.upsert);
   const remove = useCatalog((s) => s.remove);
   const navigate = useNavigate();
@@ -58,6 +65,32 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
 
   function toggleArr<T>(list: T[], item: T): T[] {
     return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+  }
+
+  function applyImported(card: UCard) {
+    const bin = resolveBin(card);
+    setDraft((d) => ({
+      ...card,
+      faceUrl: card.faceUrl || d.faceUrl,
+      binCountry: bin.binCountry,
+      binCode: bin.binCode ?? "",
+      binIssuer: bin.binIssuer ?? "",
+    }));
+    setPaste("");
+    toast.success("已填入表单，核对后点保存");
+  }
+
+  function importText(text: string) {
+    try {
+      const payload = parseImportPayload(text);
+      if (payload.mode === "all") {
+        toast.error("这是整库 JSON，请回管理页导入");
+        return;
+      }
+      applyImported(payload.card);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "格式不对");
+    }
   }
 
   function save() {
@@ -91,6 +124,81 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
       <div className="mx-auto mb-5 max-w-xs">
         <PlasticCard card={draft} />
       </div>
+
+      <Group
+        header="给其他 AI 核对"
+        footer="复制或下载这段文本，发给别的 AI 去查官网。改完原样贴回来。只改冒号后面的值，字段名不要动。"
+      >
+        <button
+          type="button"
+          className="flex min-h-12 w-full items-center gap-3 px-4 text-[16px] text-accent pressable"
+          onClick={() => {
+            void copySheet(draft)
+              .then(() => toast.success("已复制单卡文本"))
+              .catch(() => {
+                setPaste(serializeCard(draft));
+                toast.message("复制失败，已填进下面的框，请手动选中");
+              });
+          }}
+        >
+          <Copy className="size-4" />
+          复制文本
+        </button>
+        <Divider />
+        <button
+          type="button"
+          className="flex min-h-12 w-full items-center gap-3 px-4 text-[16px] text-accent pressable"
+          onClick={() => {
+            downloadSheet(draft);
+            toast.success("已下载 .txt");
+          }}
+        >
+          <Download className="size-4" />
+          下载 .txt
+        </button>
+        <Divider />
+        <label className="flex min-h-12 w-full cursor-pointer items-center gap-3 px-4 text-[16px] text-accent pressable">
+          <ClipboardPaste className="size-4" />
+          从文件导入
+          <input
+            type="file"
+            accept=".txt,.json,text/plain,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = () => importText(String(reader.result ?? ""));
+              reader.onerror = () => toast.error("文件读不出来");
+              reader.readAsText(file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <Divider />
+        <label className="block px-4 py-3">
+          <span className="text-[13px] text-subtle">贴回修改后的文本</span>
+          <textarea
+            value={paste}
+            onChange={(e) => setPaste(e.target.value)}
+            placeholder="标识: …"
+            rows={7}
+            className="mt-1.5 w-full resize-y bg-transparent font-mono text-[13px] leading-relaxed text-fg outline-none placeholder:text-subtle"
+          />
+        </label>
+        {paste.trim() && (
+          <>
+            <Divider />
+            <button
+              type="button"
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+              onClick={() => importText(paste)}
+            >
+              用这段文本填入表单
+            </button>
+          </>
+        )}
+      </Group>
 
       <Group
         header="卡面照片"
