@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { CARDS, type UCard } from "../data/cards.ts";
+import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 3;
+export const SEED_REVISION = 4;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -11,6 +11,49 @@ function cloneCards(): UCard[] {
 
 function asNum(v: unknown, fallback = 0): number {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+}
+
+function asCap(v: unknown): number | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null) return null;
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  return undefined;
+}
+
+function normalizeLevel(raw: unknown): CardLevel | null {
+  if (!raw || typeof raw !== "object") return null;
+  const l = raw as Partial<CardLevel>;
+  const id = typeof l.id === "string" ? l.id.trim() : "";
+  const name = typeof l.name === "string" ? l.name.trim() : "";
+  if (!id || !name) return null;
+  const level: CardLevel = { id, name };
+  if (typeof l.note === "string" && l.note) level.note = l.note;
+  if (typeof l.openingFeeUsd === "number" && Number.isFinite(l.openingFeeUsd)) {
+    level.openingFeeUsd = l.openingFeeUsd;
+  }
+  if (typeof l.annualFeeUsd === "number" && Number.isFinite(l.annualFeeUsd)) {
+    level.annualFeeUsd = l.annualFeeUsd;
+  }
+  if (typeof l.monthlyFeeUsd === "number" && Number.isFinite(l.monthlyFeeUsd)) {
+    level.monthlyFeeUsd = l.monthlyFeeUsd;
+  }
+  if (typeof l.topupFeePct === "number" && Number.isFinite(l.topupFeePct)) {
+    level.topupFeePct = l.topupFeePct;
+  }
+  if (typeof l.spendFeePct === "number" && Number.isFinite(l.spendFeePct)) {
+    level.spendFeePct = l.spendFeePct;
+  }
+  if (typeof l.fxFeePct === "number" && Number.isFinite(l.fxFeePct)) {
+    level.fxFeePct = l.fxFeePct;
+  }
+  if (typeof l.cashbackPct === "number" && Number.isFinite(l.cashbackPct)) {
+    level.cashbackPct = l.cashbackPct;
+  }
+  const amountCap = asCap(l.cashbackAmountCapUsd);
+  if (amountCap !== undefined) level.cashbackAmountCapUsd = amountCap;
+  const spendCap = asCap(l.cashbackSpendCapUsd);
+  if (spendCap !== undefined) level.cashbackSpendCapUsd = spendCap;
+  return level;
 }
 
 export function normalizeCard(raw: unknown): UCard | null {
@@ -48,6 +91,9 @@ export function normalizeCard(raw: unknown): UCard | null {
       ? c.sourceUrls.filter((url): url is string => typeof url === "string")
       : [],
     risk: ([1, 2, 3, 4, 5] as const).includes(c.risk as 1) ? (c.risk as 1 | 2 | 3 | 4 | 5) : 3,
+    levels: Array.isArray(c.levels)
+      ? c.levels.map(normalizeLevel).filter((l): l is CardLevel => Boolean(l))
+      : undefined,
   };
 }
 

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, GitCompareArrows, Pencil } from "lucide-react";
+import { useState } from "react";
 import { FeeStack } from "@/components/fee-stack";
 import { SourcePanel } from "@/components/data-confidence";
-import { Fade, Group, LargeTitle, Page, Row } from "@/components/ios";
+import { Chip, Desk, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { PlasticCard } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,17 @@ import {
   STATUS_LABEL,
   formatBin,
 } from "@/data/cards";
-import { calcCard } from "@/lib/calc";
+import {
+  calcCard,
+  effectiveFees,
+  feesVaryByLevel,
+  formatUsd,
+  pickLevel,
+  resolveLevels,
+} from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
 import { useDesk } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/card/$slug")({ component: CardDetail });
 
@@ -29,6 +38,7 @@ function CardDetail() {
   const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
+  const [levelId, setLevelId] = useState<string | null>(null);
 
   if (!card) {
     return (
@@ -43,10 +53,20 @@ function CardDetail() {
     );
   }
 
+  const levels = resolveLevels(card);
+  const activeId = levels.some((l) => l.id === levelId)
+    ? (levelId as string)
+    : pickLevel(card, tier).id;
+  const active = levels.find((l) => l.id === activeId) ?? levels[0]!;
+  const fees = effectiveFees(card, active);
   const result =
     card.status === "shutdown"
       ? null
-      : calcCard(card, { spend, bill, tier, includePhysicalFee });
+      : calcCard(card, { spend, bill, tier, includePhysicalFee, levelId: activeId });
+  const wearVaries = feesVaryByLevel(card);
+  const inCompare = selected.includes(card.slug);
+  const cardSlug = card.slug;
+  const cardUrl = card.url;
   const facts: Array<[string, string]> = [
     ["卡 BIN", formatBin(card)],
     ["卡组织", card.network ? card.network.toUpperCase() : "—"],
@@ -56,120 +76,213 @@ function CardDetail() {
     ["类型", CATEGORY_LABEL[card.category] ?? "—"],
     ["Apple Pay", card.applePay ? "支持" : "不支持"],
     ["Google Pay", card.googlePay ? "支持" : "不支持"],
-    ["开卡费", `$${card.openingFeeUsd ?? 0}`],
+    ["开卡费", `$${fees.openingFeeUsd}`],
     ["实体卡费", `$${card.physicalFeeUsd ?? 0}`],
-    ["充值费", `${card.topupFeePct ?? 0}%`],
+    ["年费", `$${fees.annualFeeUsd}`],
+    ["月费", `$${fees.monthlyFeeUsd}`],
+    ["充值费", `${fees.topupFeePct}%`],
     ["币种转换", `${card.cryptoConversionFeePct ?? 0}%`],
-    ["消费费", `${card.spendFeePct ?? 0}%`],
-    ["FX", `${card.fxFeePct ?? 0}%`],
-    ["入门返现", `${card.cashbackPct ?? 0}%`],
-    ["进阶返现", `${card.cashbackPctHigh ?? 0}%`],
+    ["消费费", `${fees.spendFeePct}%`],
+    ["FX", `${fees.fxFeePct}%`],
+    ["返现", `${fees.cashbackPct}%`],
     ["风险", `${card.risk ?? "—"}/5`],
   ];
 
-  return (
-    <Page>
+  function Actions({ className }: { className?: string }) {
+    return (
       <Fade>
-        <p className="text-[15px] font-medium text-accent">
-          <Link to="/cards">卡库</Link>
-        </p>
-      </Fade>
-      <LargeTitle>{card.name}</LargeTitle>
-      <Fade>
-        <p className="mb-4 text-[15px] text-subtle">{card.nameEn}</p>
-        <PlasticCard card={card} className="mb-4" />
-        <p className="mb-4 text-[15px] leading-relaxed text-muted">{card.summary}</p>
-      </Fade>
-
-      {result && (
-        <Group header="按当前口径">
-          <div className="px-4 py-4">
-            <p className="text-[12px] text-subtle">
-              ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} ·{" "}
-              {tier === "entry" ? "入门档" : "进阶档"} · {includePhysicalFee ? "含实体卡费" : "仅虚拟卡"}
-            </p>
-            <div className="mt-1">
-              <NetFigure value={result.net} size="lg" />
-            </div>
-            <div className="mt-4">
-              <FeeStack result={result} />
-            </div>
-          </div>
-        </Group>
-      )}
-
-      <Fade>
-        <div className="mb-6 flex gap-2">
+        <div className={cn("mb-6 flex gap-2", className)}>
           <Button
             className="flex-1"
-            variant={selected.includes(card.slug) ? "default" : "secondary"}
-            onClick={() => toggleSelected(card.slug)}
+            variant={inCompare ? "default" : "secondary"}
+            onClick={() => toggleSelected(cardSlug)}
           >
             <GitCompareArrows className="size-4" />
-            {selected.includes(card.slug) ? "已在比较" : "加入比较"}
+            {inCompare ? "已在比较" : "加入比较"}
           </Button>
           <Button asChild variant="secondary" size="icon" aria-label="编辑">
-            <Link to="/admin/$slug" params={{ slug: card.slug }}>
+            <Link to="/admin/$slug" params={{ slug: cardSlug }}>
               <Pencil className="size-4" />
             </Link>
           </Button>
-          {card.url && (
+          {cardUrl && (
             <Button asChild variant="secondary" size="icon" aria-label="官网">
-              <a href={card.url} target="_blank" rel="noreferrer noopener">
+              <a href={cardUrl} target="_blank" rel="noreferrer noopener">
                 <ArrowUpRight className="size-4" />
               </a>
             </Button>
           )}
         </div>
       </Fade>
+    );
+  }
 
-      <Group header="条款">
-        {facts.map(([k, v], i) => (
-          <div key={k}>
-            {i > 0 && <div className="ml-4 h-px bg-border" />}
-            <Row label={k}>
-              <span className="text-[15px] text-muted">{v}</span>
-            </Row>
-          </div>
-        ))}
-      </Group>
-
-      <Group header="数据可信度">
-        <SourcePanel card={card} />
-      </Group>
-
-      <Group header="优点">
-        {(card.pros?.length ? card.pros : ["—"]).map((p, i) => (
-          <div key={p}>
-            {i > 0 && <div className="ml-4 h-px bg-border" />}
-            <p className="px-4 py-3 text-[15px] text-fg">{p}</p>
-          </div>
-        ))}
-      </Group>
-      <Group header="缺点">
-        {(card.cons ?? []).map((p, i) => (
-          <div key={p}>
-            {i > 0 && <div className="ml-4 h-px bg-border" />}
-            <p className="px-4 py-3 text-[15px] text-fg">{p}</p>
-          </div>
-        ))}
-      </Group>
-
-      <Group header="备注" footer={`更新 ${card.updatedAt} · ${STATUS_LABEL[card.status] ?? card.status}`}>
-        <p className="px-4 py-3 text-[14px] leading-relaxed text-muted">
-          {card.cashbackNote}
-          {card.statusNote ? ` ${card.statusNote}` : ""}
-          {card.riskNote ? ` ${card.riskNote}` : ""}
-        </p>
-        {card.scenes && card.scenes.length > 0 && (
+  return (
+    <Page>
+      <Desk
+        rail={
           <>
-            <div className="ml-4 h-px bg-border" />
-            <p className="px-4 py-3 text-[14px] text-muted">
-              {card.scenes.map((s) => SCENE_LABEL[s] ?? s).join(" · ")}
-            </p>
+            <Fade>
+              <p className="text-[15px] font-medium text-accent">
+                <Link to="/cards">卡库</Link>
+              </p>
+            </Fade>
+            <LargeTitle>{card.name}</LargeTitle>
+            <Fade>
+              <p className="mb-4 text-[15px] text-subtle">{card.nameEn}</p>
+              <PlasticCard card={card} className="mb-4" />
+              <p className="mb-4 text-[15px] leading-relaxed text-muted">{card.summary}</p>
+            </Fade>
+            {result && (
+              <div className="mb-4 hidden lg:block">
+                <p className="text-[12px] text-subtle">
+                  ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} · {active.name}
+                  {result.promoActive ? " · 活动消费费" : ""}
+                </p>
+                <div className="mt-1">
+                  <NetFigure value={result.net} size="lg" />
+                </div>
+              </div>
+            )}
+            <Actions className="hidden lg:flex" />
           </>
+        }
+      >
+        {levels.length > 1 && (
+          <Group
+            header="档位"
+            footer={wearVaries ? "这一张卡换档不只改返现，消费费、FX、月费也会变。" : "这一张卡各档磨损相同，差别主要在返现和封顶。"}
+          >
+            <div className="flex flex-wrap gap-1.5 px-4 py-3">
+              {levels.map((l) => (
+                <Chip key={l.id} on={l.id === activeId} onClick={() => setLevelId(l.id)}>
+                  {l.name}
+                </Chip>
+              ))}
+            </div>
+          </Group>
         )}
-      </Group>
+
+        {result && (
+          <Group header="按当前口径">
+            <div className="px-4 py-4">
+              <p className="text-[12px] text-subtle lg:hidden">
+                ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} · {active.name}
+                {result.promoActive ? " · 活动消费费" : ""}
+              </p>
+              <div className="mt-1 lg:hidden">
+                <NetFigure value={result.net} size="lg" />
+              </div>
+              <div className="mt-4 lg:mt-0">
+                <FeeStack result={result} />
+              </div>
+            </div>
+          </Group>
+        )}
+
+        {levels.length > 1 && card.status !== "shutdown" && (
+          <Group header="各档对照" footer="同一消费额下，每一档自己的磨损和返现。">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[28rem] text-left text-[13px]">
+                <thead>
+                  <tr className="text-[11px] text-subtle">
+                    <th className="px-4 py-2 font-medium">档位</th>
+                    <th className="px-2 py-2 font-medium">消费</th>
+                    <th className="px-2 py-2 font-medium">FX</th>
+                    <th className="px-2 py-2 font-medium">月/年</th>
+                    <th className="px-2 py-2 font-medium">返现</th>
+                    <th className="px-4 py-2 text-right font-medium">本月净</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {levels.map((l) => {
+                    const f = effectiveFees(card, l);
+                    const r = calcCard(card, { spend, bill, tier, includePhysicalFee, levelId: l.id });
+                    const on = l.id === activeId;
+                    return (
+                      <tr
+                        key={l.id}
+                        className={cn("cursor-pointer pressable", on && "bg-surface-2")}
+                        onClick={() => setLevelId(l.id)}
+                      >
+                        <td className="px-4 py-2.5 font-medium">{l.name}</td>
+                        <td className="px-2 py-2.5 tabular-nums text-muted">{f.spendFeePct}%</td>
+                        <td className="px-2 py-2.5 tabular-nums text-muted">{f.fxFeePct}%</td>
+                        <td className="px-2 py-2.5 tabular-nums text-muted">
+                          {f.monthlyFeeUsd > 0
+                            ? `$${f.monthlyFeeUsd}/月`
+                            : f.annualFeeUsd > 0
+                              ? `$${f.annualFeeUsd}/年`
+                              : "—"}
+                        </td>
+                        <td className="px-2 py-2.5 tabular-nums text-muted">{f.cashbackPct}%</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <span className={r.net >= 0 ? "text-gain" : "text-loss"}>{formatUsd(r.net)}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Group>
+        )}
+
+        <Actions className="lg:hidden" />
+
+        <Group header="条款">
+          <div className="grid grid-cols-1 divide-y divide-border lg:grid-cols-2 lg:divide-y-0 lg:gap-px lg:bg-border xl:grid-cols-4">
+            {facts.map(([k, v]) => (
+              <div
+                key={k}
+                className="flex min-h-12 items-center justify-between gap-3 bg-surface px-4 py-2.5"
+              >
+                <span className="shrink-0 text-[13px] text-subtle">{k}</span>
+                <span className="truncate text-[15px] text-fg">{v}</span>
+              </div>
+            ))}
+          </div>
+        </Group>
+
+        <Group header="数据可信度">
+          <SourcePanel card={card} />
+        </Group>
+
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
+          <Group header="优点">
+            {(card.pros?.length ? card.pros : ["—"]).map((p, i) => (
+              <div key={p}>
+                {i > 0 && <div className="ml-4 h-px bg-border" />}
+                <p className="px-4 py-3 text-[15px] text-fg">{p}</p>
+              </div>
+            ))}
+          </Group>
+          <Group header="缺点">
+            {(card.cons ?? []).map((p, i) => (
+              <div key={p}>
+                {i > 0 && <div className="ml-4 h-px bg-border" />}
+                <p className="px-4 py-3 text-[15px] text-fg">{p}</p>
+              </div>
+            ))}
+          </Group>
+        </div>
+
+        <Group header="备注" footer={`更新 ${card.updatedAt} · ${STATUS_LABEL[card.status] ?? card.status}`}>
+          <p className="px-4 py-3 text-[14px] leading-relaxed text-muted">
+            {card.cashbackNote}
+            {card.statusNote ? ` ${card.statusNote}` : ""}
+            {card.riskNote ? ` ${card.riskNote}` : ""}
+          </p>
+          {card.scenes && card.scenes.length > 0 && (
+            <>
+              <div className="ml-4 h-px bg-border" />
+              <p className="px-4 py-3 text-[14px] text-muted">
+                {card.scenes.map((s) => SCENE_LABEL[s] ?? s).join(" · ")}
+              </p>
+            </>
+          )}
+        </Group>
+      </Desk>
     </Page>
   );
 }

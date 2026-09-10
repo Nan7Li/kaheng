@@ -22,6 +22,22 @@ export type BinCountry =
   | "mixed"
   | "unknown";
 
+
+export interface CardLevel {
+  id: string;
+  name: string;
+  note?: string;
+  openingFeeUsd?: number;
+  annualFeeUsd?: number;
+  monthlyFeeUsd?: number;
+  topupFeePct?: number;
+  spendFeePct?: number;
+  fxFeePct?: number;
+  cashbackPct?: number;
+  cashbackAmountCapUsd?: number | null;
+  cashbackSpendCapUsd?: number | null;
+}
+
 export interface UCard {
   slug: string;
   name: string;
@@ -60,6 +76,7 @@ export interface UCard {
   cashbackAmountCapHighUsd: number | null;
   cashbackSpendCapUsd: number | null;
   cashbackNote: string;
+  levels?: CardLevel[];
   assets: string[];
   scenes: Scene[];
   risk: 1 | 2 | 3 | 4 | 5;
@@ -111,6 +128,11 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 800,
     cashbackSpendCapUsd: null,
     cashbackNote: "VVIP Standard 4% 月封顶 100 USDT，Premier 6%/300，Elite 10%/800。活动至 2026-09-30 消费费 0，之后 1%。MEXC 不加 FX 加价。",
+    levels: [
+      { id: "standard", name: "VVIP Standard", spendFeePct: 1, cashbackPct: 4, cashbackAmountCapUsd: 100 },
+      { id: "premier", name: "VVIP Premier", spendFeePct: 1, cashbackPct: 6, cashbackAmountCapUsd: 300 },
+      { id: "elite", name: "VVIP Elite", spendFeePct: 1, cashbackPct: 10, cashbackAmountCapUsd: 800 },
+    ],
     assets: ["USDT"],
     scenes: ["daily", "offramp", "ai"],
     risk: 3,
@@ -159,6 +181,11 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 800,
     cashbackSpendCapUsd: null,
     cashbackNote: "返现等级与全球卡共享：4%/6%/10%，月封顶 100/300/800 USDT。",
+    levels: [
+      { id: "standard", name: "VVIP Standard", cashbackPct: 4, cashbackAmountCapUsd: 100 },
+      { id: "premier", name: "VVIP Premier", cashbackPct: 6, cashbackAmountCapUsd: 300 },
+      { id: "elite", name: "VVIP Elite", cashbackPct: 10, cashbackAmountCapUsd: 800 },
+    ],
     assets: ["USDT"],
     scenes: ["daily", "offramp", "ai"],
     risk: 3,
@@ -256,6 +283,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 800,
     cashbackSpendCapUsd: null,
     cashbackNote: "仅 USDG 消费计返。非 VIP 2% 月封顶 $5；VIP 4%–10%，最高月封顶 $800。",
+    levels: [
+      { id: "retail", name: "普通", cashbackPct: 2, cashbackAmountCapUsd: 5 },
+      { id: "vip", name: "VIP", cashbackPct: 10, cashbackAmountCapUsd: 800 },
+    ],
     assets: ["USDG", "USDT", "USDC"],
     scenes: ["ai", "daily", "apple"],
     risk: 2,
@@ -305,6 +336,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 1000,
     cashbackSpendCapUsd: null,
     cashbackNote: "非 VIP 2% 月封顶 €50；VIP 4+ 10% 月封顶 €1,000。2026-09 另有可选 €100 基础封顶活动。部分 EEA 用户的 ChatGPT、Claude、Netflix 订阅可额外 50%，月封顶 €10，以 App 资格和活动预算为准。",
+    levels: [
+      { id: "retail", name: "普通", cashbackPct: 2, cashbackAmountCapUsd: 50 },
+      { id: "vip", name: "VIP", cashbackPct: 10, cashbackAmountCapUsd: 1000 },
+    ],
     assets: ["USDG", "USDC"],
     scenes: ["ai", "daily", "apple"],
     risk: 2,
@@ -354,6 +389,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 1000,
     cashbackSpendCapUsd: null,
     cashbackNote: "基础 2% 月封顶 50 SGD；VIP 4+ 最高 10%，月封顶 1,000 SGD。",
+    levels: [
+      { id: "retail", name: "普通", cashbackPct: 2, cashbackAmountCapUsd: 50 },
+      { id: "vip", name: "VIP", cashbackPct: 10, cashbackAmountCapUsd: 1000 },
+    ],
     assets: ["USDG", "USDT", "USDC"],
     scenes: ["ai", "daily", "apple"],
     risk: 2,
@@ -403,6 +442,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 600,
     cashbackSpendCapUsd: null,
     cashbackNote: "APAC Base 2% 月封顶约 5 USDT；Beta 起 2%–10%，封顶 50–600 USDT。T2+ 对 Netflix / ChatGPT 等有 100% 点返还。",
+    levels: [
+      { id: "base", name: "Base", cashbackPct: 2, cashbackAmountCapUsd: 5 },
+      { id: "beta", name: "Beta+", cashbackPct: 10, cashbackAmountCapUsd: 600 },
+    ],
     assets: ["USDT", "USDC", "BTC", "ETH"],
     scenes: ["ai", "daily", "offramp"],
     risk: 2,
@@ -451,6 +494,11 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 60,
     cashbackSpendCapUsd: 2000,
     cashbackNote: "标准档 1.5% USD，每月前 $2,000 计返；Premium 2% / 前 $10,000，Private 3%。返现有 14 天锁。FX 0.5%–1.75% 视地区。",
+    levels: [
+      { id: "standard", name: "Standard", fxFeePct: 0.5, cashbackPct: 1.5, cashbackAmountCapUsd: 30, cashbackSpendCapUsd: 2000 },
+      { id: "premium", name: "Premium", fxFeePct: 0.5, cashbackPct: 2, cashbackAmountCapUsd: 40, cashbackSpendCapUsd: 10000 },
+      { id: "private", name: "Private", fxFeePct: 0.5, cashbackPct: 3, cashbackAmountCapUsd: 60, cashbackSpendCapUsd: 10000 },
+    ],
     assets: ["USDC", "USDT", "USDe"],
     scenes: ["daily", "apple", "ai"],
     risk: 3,
@@ -574,6 +622,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 18,
     cashbackSpendCapUsd: null,
     cashbackNote: "标准卡无返现。Pro 月费 $12.90 / 年 $129，Apple/Google Pay 3%，月封顶 $18。银行借记卡充值另收约 3%。",
+    levels: [
+      { id: "standard", name: "标准卡", openingFeeUsd: 10, monthlyFeeUsd: 0, spendFeePct: 1, fxFeePct: 1.2, cashbackPct: 0, cashbackAmountCapUsd: 0 },
+      { id: "pro", name: "Pro", openingFeeUsd: 10, monthlyFeeUsd: 12.9, spendFeePct: 1, fxFeePct: 1.2, cashbackPct: 3, cashbackAmountCapUsd: 18 },
+    ],
     assets: ["USDT", "USDC", "BTC", "ETH"],
     scenes: ["offramp", "apple", "ads"],
     risk: 3,
@@ -615,6 +667,12 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 50,
     cashbackSpendCapUsd: null,
     cashbackNote: "全球预付卡：未质押 Midnight Blue 约 0%；Ruby 起约 2%–5% CRO，视锁仓。美国那张信用卡是另一款。",
+    levels: [
+      { id: "midnight", name: "Midnight Blue", fxFeePct: 2.5, cashbackPct: 0, cashbackAmountCapUsd: 0 },
+      { id: "ruby", name: "Ruby Steel", fxFeePct: 0, cashbackPct: 2, cashbackAmountCapUsd: 25 },
+      { id: "jade", name: "Jade / Indigo", fxFeePct: 0, cashbackPct: 3, cashbackAmountCapUsd: 50 },
+      { id: "icy", name: "Icy / Rose", fxFeePct: 0, cashbackPct: 5, cashbackAmountCapUsd: 50 },
+    ],
     assets: ["USDT", "USDC", "CRO"],
     scenes: ["daily", "apple"],
     risk: 2,
@@ -861,6 +919,11 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 120,
     cashbackSpendCapUsd: 100,
     cashbackNote: "Virtual 1.5% 仅前 $100/月；Signature 4.5% 前 $1,000；Premium 6% 前 $2,000。之上掉档。返现常要自己领取。",
+    levels: [
+      { id: "virtual", name: "Virtual", openingFeeUsd: 25, spendFeePct: 1, fxFeePct: 1, cashbackPct: 1.5, cashbackAmountCapUsd: 1.5, cashbackSpendCapUsd: 100 },
+      { id: "signature", name: "Signature", openingFeeUsd: 109, spendFeePct: 1, fxFeePct: 1, cashbackPct: 4.5, cashbackAmountCapUsd: 45, cashbackSpendCapUsd: 1000 },
+      { id: "premium", name: "Premium", openingFeeUsd: 250, spendFeePct: 1, fxFeePct: 1, cashbackPct: 6, cashbackAmountCapUsd: 120, cashbackSpendCapUsd: 2000 },
+    ],
     assets: ["USDT", "USDC"],
     scenes: ["daily", "apple"],
     risk: 4,
@@ -942,6 +1005,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 60,
     cashbackSpendCapUsd: null,
     cashbackNote: "基础约 1% 月封顶约 10 USDC；持仓 / VIP 可到 3%–8%，封顶随等级。部分地区有 0.5% 交易费。",
+    levels: [
+      { id: "base", name: "基础", spendFeePct: 0.5, fxFeePct: 1, cashbackPct: 1, cashbackAmountCapUsd: 10 },
+      { id: "vip", name: "VIP", spendFeePct: 0, fxFeePct: 1, cashbackPct: 3, cashbackAmountCapUsd: 60 },
+    ],
     assets: ["USDT", "USDC"],
     scenes: ["daily", "ai"],
     risk: 3,
@@ -983,6 +1050,10 @@ export const CARDS: UCard[] = [
     cashbackAmountCapHighUsd: 40,
     cashbackSpendCapUsd: 500,
     cashbackNote: "Lite 前 $500 约 2%，其后约 0.1%；Core 年费约 $199，返现更高但常是 XPL。FX 约 1%（Core 可到 0.5%）。",
+    levels: [
+      { id: "lite", name: "Lite", annualFeeUsd: 0, fxFeePct: 1, cashbackPct: 2, cashbackAmountCapUsd: 10, cashbackSpendCapUsd: 500 },
+      { id: "core", name: "Core", annualFeeUsd: 199, fxFeePct: 0.5, cashbackPct: 5, cashbackAmountCapUsd: 40, cashbackSpendCapUsd: 2000 },
+    ],
     assets: ["USDT", "USDC"],
     scenes: ["daily", "apple"],
     risk: 4,

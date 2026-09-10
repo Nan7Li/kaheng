@@ -56,3 +56,56 @@ test("Bybit conversion is not mislabeled as top-up", () => {
 test("Bybit high tier uses the documented cap", () => {
   assert.equal(card("bybit").cashbackAmountCapHighUsd, 600);
 });
+
+test("entry uses first named level and boost uses last", () => {
+  const entry = calcCard(card("mexc"), {
+    spend: 1000,
+    bill: "usd",
+    tier: "entry",
+  }, new Date("2026-10-01T00:00:00Z"));
+  const boost = calcCard(card("mexc"), {
+    spend: 1000,
+    bill: "usd",
+    tier: "boost",
+  }, new Date("2026-10-01T00:00:00Z"));
+  assert.equal(entry.levelName, "VVIP Standard");
+  assert.equal(entry.cashback, 40);
+  assert.equal(boost.levelName, "VVIP Elite");
+  assert.equal(boost.cashback, 100);
+});
+
+test("Crypto.com Midnight FX is not applied on USD bills", () => {
+  const midnight = calcCard(card("cryptocom"), {
+    spend: 1000,
+    bill: "usd",
+    tier: "entry",
+    levelId: "midnight",
+  });
+  const icyLocal = calcCard(card("cryptocom"), {
+    spend: 1000,
+    bill: "local",
+    tier: "boost",
+    levelId: "icy",
+  });
+  assert.equal(midnight.fx, 0);
+  assert.equal(midnight.cashback, 0);
+  assert.equal(icyLocal.fx, 0);
+  assert.equal(icyLocal.cashback, 50);
+});
+
+test("RedotPay Pro monthly fee is amortized into net", () => {
+  const standard = calcCard(card("redotpay"), {
+    spend: 1000,
+    bill: "usd",
+    tier: "entry",
+  });
+  const pro = calcCard(card("redotpay"), {
+    spend: 1000,
+    bill: "usd",
+    tier: "boost",
+  });
+  assert.equal(standard.levelName, "标准卡");
+  assert.equal(pro.levelName, "Pro");
+  assert.ok(pro.amortized - standard.amortized > 12);
+});
+

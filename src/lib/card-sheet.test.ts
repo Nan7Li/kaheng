@@ -17,3 +17,15 @@ test("empty region field falls back to the safe global default", () => {
   const parsed = parseCardSheet("标识: example\n中文名: Example\n地区:\n");
   assert.deepEqual(parsed.regions, ["global"]);
 });
+
+test("named levels round-trip through the text sheet", () => {
+  const source = CARDS.find((card) => card.slug === "cryptocom");
+  assert.ok(source);
+  const parsed = parseCardSheet(serializeCard(source));
+  assert.equal(parsed.levels?.length, 4);
+  assert.equal(parsed.levels?.[0]?.id, "midnight");
+  assert.equal(parsed.levels?.[0]?.fxFeePct, 2.5);
+  assert.equal(parsed.levels?.[3]?.id, "icy");
+  assert.equal(parsed.levels?.[3]?.cashbackPct, 5);
+});
+

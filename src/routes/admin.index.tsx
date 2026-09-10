@@ -66,92 +66,96 @@ function AdminPage() {
         管理
       </LargeTitle>
       <Fade>
-        <p className="mb-5 text-[15px] leading-relaxed text-muted">
+        <p className="mb-5 max-w-xl text-[15px] leading-relaxed text-muted">
           改费率、上下架、新增卡。保存在这台设备的浏览器里，对照页会马上跟着变。
         </p>
       </Fade>
 
-      <Group header={`卡库 · ${cards.length}`}>
-        {cards.map((card, i) => (
-          <div key={card.slug}>
-            {i > 0 && <div className="ml-[4.5rem] h-px bg-border" />}
-            <Link
-              to="/admin/$slug"
-              params={{ slug: card.slug }}
-              className="flex min-h-14 items-center gap-3 px-3 py-2 pressable"
-            >
-              <CardThumb card={card} className="size-10 shrink-0 rounded-[12px]" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[16px] font-medium">{card.name}</p>
-                <p className="truncate text-[12px] text-subtle">
-                  {formatBin(card)} · {STATUS_LABEL[card.status] ?? card.status}
-                </p>
-              </div>
-              <ChevronRight className="size-4 text-subtle/70" />
-            </Link>
-          </div>
-        ))}
-      </Group>
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:items-start lg:gap-8">
+        <Group header={`卡库 · ${cards.length}`}>
+          {cards.map((card, i) => (
+            <div key={card.slug}>
+              {i > 0 && <div className="ml-[4.5rem] h-px bg-border" />}
+              <Link
+                to="/admin/$slug"
+                params={{ slug: card.slug }}
+                className="flex min-h-14 items-center gap-3 px-3 py-2 pressable"
+              >
+                <CardThumb card={card} className="size-10 shrink-0 rounded-[12px]" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[16px] font-medium">{card.name}</p>
+                  <p className="truncate text-[12px] text-subtle">
+                    {formatBin(card)} · {STATUS_LABEL[card.status] ?? card.status}
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-subtle/70" />
+              </Link>
+            </div>
+          ))}
+        </Group>
 
-      <Group
-        header="单卡文本"
-        footer="点进某一张卡也可以复制 / 下载。格式以「# 卡衡单卡 v1」开头，改完原样贴回即可。"
-      >
-        <label className="block px-4 py-3">
-          <span className="text-[13px] text-subtle">粘贴单卡文本或 JSON</span>
-          <textarea
-            value={paste}
-            onChange={(e) => setPaste(e.target.value)}
-            placeholder={"# 卡衡单卡 v1\n标识: …"}
-            rows={6}
-            className="mt-1.5 w-full resize-y bg-transparent font-mono text-[13px] leading-relaxed text-fg outline-none placeholder:text-subtle"
-          />
-        </label>
-        {paste.trim() && (
-          <>
+        <div>
+          <Group
+            header="单卡文本"
+            footer="点进某一张卡也可以复制 / 下载。格式以「# 卡衡单卡 v1」开头，改完原样贴回即可。"
+          >
+            <label className="block px-4 py-3">
+              <span className="text-[13px] text-subtle">粘贴单卡文本或 JSON</span>
+              <textarea
+                value={paste}
+                onChange={(e) => setPaste(e.target.value)}
+                placeholder={"# 卡衡单卡 v1\n标识: …"}
+                rows={6}
+                className="mt-1.5 w-full resize-y bg-transparent font-mono text-[13px] leading-relaxed text-fg outline-none placeholder:text-subtle"
+              />
+            </label>
+            {paste.trim() && (
+              <>
+                <Divider />
+                <button
+                  type="button"
+                  onClick={() => applyText(paste)}
+                  className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+                >
+                  导入这段文本
+                </button>
+              </>
+            )}
+            <Divider />
+            <label className="flex min-h-12 w-full cursor-pointer items-center px-4 text-[16px] text-accent pressable">
+              从文件导入（.txt / .json）
+              <input
+                type="file"
+                accept=".txt,.json,text/plain,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onImport(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </Group>
+
+          <Group header="整库">
+            <button
+              type="button"
+              onClick={() => exportCatalog(cards)}
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+            >
+              导出全部 JSON
+            </button>
             <Divider />
             <button
               type="button"
-              onClick={() => applyText(paste)}
-              className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
+              onClick={onReset}
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-loss pressable"
             >
-              导入这段文本
+              恢复内置资料
             </button>
-          </>
-        )}
-        <Divider />
-        <label className="flex min-h-12 w-full cursor-pointer items-center px-4 text-[16px] text-accent pressable">
-          从文件导入（.txt / .json）
-          <input
-            type="file"
-            accept=".txt,.json,text/plain,application/json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onImport(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </Group>
-
-      <Group header="整库">
-        <button
-          type="button"
-          onClick={() => exportCatalog(cards)}
-          className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
-        >
-          导出全部 JSON
-        </button>
-        <Divider />
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex min-h-12 w-full items-center px-4 text-[16px] text-loss pressable"
-        >
-          恢复内置资料
-        </button>
-      </Group>
+          </Group>
+        </div>
+      </div>
     </Page>
   );
 }

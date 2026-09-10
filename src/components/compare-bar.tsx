@@ -13,8 +13,8 @@ export function CompareBar() {
   if (selected.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[5.6rem] z-30 px-3">
-      <div className="pointer-events-auto mx-auto flex max-w-md items-center gap-2 rounded-[24px] px-3 py-2 glass">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[5.6rem] z-30 px-3 lg:bottom-5 lg:left-[var(--app-sidebar)]">
+      <div className="pointer-events-auto mx-auto flex max-w-md items-center gap-2 rounded-[24px] px-3 py-2 glass lg:ml-0 lg:max-w-xl">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
           {selected.map((slug) => {
             const card = cards.find((c) => c.slug === slug);

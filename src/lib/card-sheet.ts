@@ -1,6 +1,7 @@
 import {
   BIN_SEED,
   type BinCountry,
+  type CardLevel,
   type Category,
   type Custody,
   type FormFactor,
@@ -33,6 +34,24 @@ function numOrEmpty(v: number | null | undefined): string {
 }
 function list(v: string[] | undefined): string {
   return (v ?? []).join(", ");
+}
+
+function serializeLevels(levels: CardLevel[] | undefined): string {
+  if (!levels?.length) return "";
+  const lines = levels.map((l) => {
+    const bits = [l.id, l.name];
+    if (l.openingFeeUsd !== undefined) bits.push(`开卡:${l.openingFeeUsd}`);
+    if (l.annualFeeUsd !== undefined) bits.push(`年费:${l.annualFeeUsd}`);
+    if (l.monthlyFeeUsd !== undefined) bits.push(`月费:${l.monthlyFeeUsd}`);
+    if (l.topupFeePct !== undefined) bits.push(`充值:${l.topupFeePct}`);
+    if (l.spendFeePct !== undefined) bits.push(`消费:${l.spendFeePct}`);
+    if (l.fxFeePct !== undefined) bits.push(`FX:${l.fxFeePct}`);
+    if (l.cashbackPct !== undefined) bits.push(`返现:${l.cashbackPct}`);
+    if (l.cashbackAmountCapUsd !== undefined) bits.push(`封顶:${numOrEmpty(l.cashbackAmountCapUsd)}`);
+    if (l.cashbackSpendCapUsd !== undefined) bits.push(`计返:${numOrEmpty(l.cashbackSpendCapUsd)}`);
+    return `- ${bits.join(" | ")}`;
+  });
+  return `档位:\n${lines.join("\n")}\n`;
 }
 
 export function serializeCard(card: UCard): string {
@@ -80,7 +99,7 @@ FX: ${card.fxFeePct}
 进阶封顶: ${numOrEmpty(card.cashbackAmountCapHighUsd)}
 计返消费: ${numOrEmpty(card.cashbackSpendCapUsd)}
 返现说明: ${card.cashbackNote ?? ""}
-资产: ${list(card.assets)}
+${serializeLevels(card.levels)}资产: ${list(card.assets)}
 场景: ${list(card.scenes)}
 风险: ${card.risk}
 风险说明: ${card.riskNote ?? ""}
@@ -138,6 +157,56 @@ function parseBulletBlock(lines: string[], start: number): { items: string[]; ne
   return { items: items.filter(Boolean), next: i };
 }
 
+function parseLevelLine(line: string): CardLevel | null {
+  const parts = line
+    .replace(/^\s*[-*•]\s*/, "")
+    .split("|")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length < 2) return null;
+  const id = parts[0] ?? "";
+  const name = parts[1] ?? "";
+  if (!id || !name) return null;
+  const map = new Map<string, string>();
+  for (const p of parts.slice(2)) {
+    const m = p.match(/^([^:]+):\s*(.*)$/);
+    if (m) map.set((m[1] ?? "").trim(), (m[2] ?? "").trim());
+  }
+  const opt = (k: string): number | undefined => {
+    const v = map.get(k);
+    if (v === undefined || v === "") return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const cap = (k: string): number | null | undefined => {
+    if (!map.has(k)) return undefined;
+    const v = map.get(k) ?? "";
+    if (v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const level: CardLevel = { id, name };
+  const opening = opt("开卡");
+  const annual = opt("年费");
+  const monthly = opt("月费");
+  const topup = opt("充值");
+  const spend = opt("消费");
+  const fx = opt("FX");
+  const cashback = opt("返现");
+  const amountCap = cap("封顶");
+  const spendCap = cap("计返");
+  if (opening !== undefined) level.openingFeeUsd = opening;
+  if (annual !== undefined) level.annualFeeUsd = annual;
+  if (monthly !== undefined) level.monthlyFeeUsd = monthly;
+  if (topup !== undefined) level.topupFeePct = topup;
+  if (spend !== undefined) level.spendFeePct = spend;
+  if (fx !== undefined) level.fxFeePct = fx;
+  if (cashback !== undefined) level.cashbackPct = cashback;
+  if (amountCap !== undefined) level.cashbackAmountCapUsd = amountCap;
+  if (spendCap !== undefined) level.cashbackSpendCapUsd = spendCap;
+  return level;
+}
+
 export function parseCardSheet(text: string): UCard {
   const trimmed = text.trim();
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
@@ -154,6 +223,7 @@ export function parseCardSheet(text: string): UCard {
   let i = 0;
   let pros: string[] | undefined;
   let cons: string[] | undefined;
+  let levels: CardLevel[] | undefined;
 
   while (i < lines.length) {
     const line = lines[i] ?? "";
@@ -178,6 +248,13 @@ export function parseCardSheet(text: string): UCard {
     if (key === "缺点") {
       const block = parseBulletBlock(lines, i + 1);
       cons = block.items;
+      i = block.next;
+      continue;
+    }
+    if (key === "档位") {
+      const block = parseBulletBlock(lines, i + 1);
+      const parsed = block.items.map(parseLevelLine).filter((l): l is CardLevel => Boolean(l));
+      levels = parsed.length ? parsed : undefined;
       i = block.next;
       continue;
     }
@@ -233,6 +310,7 @@ export function parseCardSheet(text: string): UCard {
     cashbackAmountCapHighUsd: parseNullNum(g("进阶封顶")),
     cashbackSpendCapUsd: parseNullNum(g("计返消费")),
     cashbackNote: g("返现说明"),
+    levels,
     assets: splitList(g("资产")).length ? splitList(g("资产")) : base.assets,
     scenes: (splitList(g("场景")) as Scene[]) || base.scenes,
     risk: ([1, 2, 3, 4, 5] as const).includes(Number(g("风险")) as 1)

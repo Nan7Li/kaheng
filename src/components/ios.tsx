@@ -14,9 +14,36 @@ export function Page({
   return (
     <div
       key={pathname}
-      className={cn("ios-enter mx-auto w-full max-w-2xl px-4 pt-2 pb-36", className)}
+      className={cn(
+        "ios-enter mx-auto w-full max-w-2xl px-4 pt-2 pb-36 lg:max-w-[88rem] lg:px-8 lg:pt-6 lg:pb-16 xl:px-10",
+        className,
+      )}
     >
       {children}
+    </div>
+  );
+}
+
+export function Desk({
+  rail,
+  children,
+  className,
+}: {
+  rail: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-full flex-col lg:grid lg:grid-cols-[minmax(17rem,21rem)_minmax(0,1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)] xl:gap-10",
+        className,
+      )}
+    >
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
+        {rail}
+      </aside>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
@@ -41,10 +68,10 @@ export function LargeTitle({
   trailing?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-3 pt-3">
+    <div className="mb-4 flex items-end justify-between gap-4 pt-3 lg:mb-6 lg:pt-0">
       <div>
         {eyebrow && <p className="text-[13px] font-medium text-subtle">{eyebrow}</p>}
-        <h1 className="text-[34px] leading-none tracking-tight">{children}</h1>
+        <h1 className="text-[34px] leading-none tracking-tight lg:text-[40px]">{children}</h1>
       </div>
       {trailing}
     </div>

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ClipboardPaste, Copy, Download, ImagePlus } from "lucide-react";
+import { ClipboardPaste, Copy, Download, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Area, Divider, Field, Group, Row, Segmented } from "@/components/ios";
@@ -10,6 +10,7 @@ import {
   BIN_COUNTRY_LABEL,
   SCENE_LABEL,
   type BinCountry,
+  type CardLevel,
   type Category,
   type Custody,
   type FormFactor,
@@ -64,6 +65,39 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
+  function patchLevel(id: string, next: Partial<CardLevel>) {
+    setDraft((d) => ({
+      ...d,
+      levels: (d.levels ?? []).map((l) => (l.id === id ? { ...l, ...next } : l)),
+    }));
+  }
+
+  function addLevel() {
+    setDraft((d) => {
+      const existing = d.levels ?? [];
+      const id = `lv-${Math.random().toString(36).slice(2, 6)}`;
+      const isFirst = existing.length === 0;
+      const row: CardLevel = {
+        id,
+        name: isFirst ? "入门档" : existing.length === 1 ? "进阶档" : `档位 ${existing.length + 1}`,
+        openingFeeUsd: d.openingFeeUsd,
+        annualFeeUsd: d.annualFeeUsd,
+        monthlyFeeUsd: d.monthlyFeeUsd,
+        topupFeePct: d.topupFeePct,
+        spendFeePct: d.spendFeePct,
+        fxFeePct: d.fxFeePct,
+        cashbackPct: isFirst ? d.cashbackPct : d.cashbackPctHigh,
+        cashbackAmountCapUsd: isFirst ? d.cashbackAmountCapUsd : d.cashbackAmountCapHighUsd,
+        cashbackSpendCapUsd: d.cashbackSpendCapUsd,
+      };
+      return { ...d, levels: [...existing, row] };
+    });
+  }
+
+  function removeLevel(id: string) {
+    setDraft((d) => ({ ...d, levels: (d.levels ?? []).filter((l) => l.id !== id) }));
+  }
+
   function toggleArr<T>(list: T[], item: T): T[] {
     return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
   }
@@ -108,7 +142,11 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     if (isNew && (!slug || slug === "new-card")) {
       slug = `custom-${Math.random().toString(36).slice(2, 7)}`;
     }
-    upsert({ ...draft, slug: slug || draft.slug });
+    upsert({
+      ...draft,
+      slug: slug || draft.slug,
+      levels: draft.levels && draft.levels.length > 0 ? draft.levels : undefined,
+    });
     toast.success("已保存到本机");
     void navigate({ to: "/admin" });
   }
@@ -121,10 +159,11 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
   }
 
   return (
-    <div>
-      <div className="mx-auto mb-5 max-w-xs">
+    <div className="lg:grid lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] lg:items-start lg:gap-10">
+      <div className="mx-auto mb-5 max-w-xs lg:sticky lg:top-6 lg:mx-0 lg:mb-0">
         <PlasticCard card={draft} />
       </div>
+      <div>
 
       <Group
         header="给其他 AI 核对"
@@ -555,6 +594,134 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         />
       </Group>
 
+      <Group
+        header="等级磨损"
+        footer="排行榜的「入门档」用第一档，「进阶档」用最后一档。中间档只在卡详情里选。不填则只按上面的入门/进阶返现算，消费费和 FX 保持不变。"
+      >
+        {(draft.levels ?? []).map((lv, i) => (
+          <div key={lv.id}>
+            {i > 0 && <Divider />}
+            <div className="px-4 py-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[13px] font-medium text-subtle">第 {i + 1} 档</p>
+                <button
+                  type="button"
+                  onClick={() => removeLevel(lv.id)}
+                  className="flex size-8 items-center justify-center rounded-full text-loss pressable"
+                  aria-label="删除此档"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+              <div className="overflow-hidden rounded-[16px] bg-surface-2">
+                <Field
+                  label="档名"
+                  value={lv.name}
+                  onChange={(v) => patchLevel(lv.id, { name: v })}
+                />
+                <Divider />
+                <Field
+                  label="开卡"
+                  type="number"
+                  suffix="$"
+                  value={lv.openingFeeUsd ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { openingFeeUsd: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="年费"
+                  type="number"
+                  suffix="$"
+                  value={lv.annualFeeUsd ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { annualFeeUsd: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="月费"
+                  type="number"
+                  suffix="$"
+                  value={lv.monthlyFeeUsd ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { monthlyFeeUsd: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="充值"
+                  type="number"
+                  suffix="%"
+                  value={lv.topupFeePct ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { topupFeePct: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="消费"
+                  type="number"
+                  suffix="%"
+                  value={lv.spendFeePct ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { spendFeePct: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="FX"
+                  type="number"
+                  suffix="%"
+                  value={lv.fxFeePct ?? ""}
+                  onChange={(v) => patchLevel(lv.id, { fxFeePct: v === "" ? undefined : num(v) })}
+                />
+                <Divider />
+                <Field
+                  label="返现"
+                  type="number"
+                  suffix="%"
+                  value={lv.cashbackPct ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { cashbackPct: v === "" ? undefined : num(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="封顶"
+                  type="number"
+                  suffix="$"
+                  value={lv.cashbackAmountCapUsd ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { cashbackAmountCapUsd: v === "" ? null : nullable(v) })
+                  }
+                />
+                <Divider />
+                <Field
+                  label="计返"
+                  type="number"
+                  suffix="$"
+                  value={lv.cashbackSpendCapUsd ?? ""}
+                  onChange={(v) =>
+                    patchLevel(lv.id, { cashbackSpendCapUsd: v === "" ? null : nullable(v) })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        {(draft.levels ?? []).length > 0 ? <Divider /> : null}
+        <button
+          type="button"
+          onClick={addLevel}
+          className="flex min-h-12 w-full items-center gap-3 px-4 text-[16px] text-accent pressable"
+        >
+          <Plus className="size-4" />
+          添加档位
+        </button>
+      </Group>
+
       <Group header="能力">
         <Row label="Apple Pay">
           <Switch checked={draft.applePay} onCheckedChange={(v) => patch("applePay", v)} />
@@ -679,6 +846,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
             删除这张卡
           </Button>
         )}
+      </div>
       </div>
     </div>
   );

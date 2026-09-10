@@ -63,6 +63,9 @@ export function DeskControls({ dense = false }: { dense?: boolean }) {
           { value: "boost", label: "进阶档" },
         ]}
       />
+      <p className="-mt-2 text-[12px] text-subtle">
+        进阶档按该卡最高一档的返现和磨损估算，不只换返现。
+      </p>
       <Segmented<"virtual" | "physical">
         value={includePhysicalFee ? "physical" : "virtual"}
         onChange={(value) => setIncludePhysicalFee(value === "physical")}
