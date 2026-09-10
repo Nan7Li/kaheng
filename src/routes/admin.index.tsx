@@ -96,6 +96,12 @@ function AdminPage() {
         </Group>
 
         <div>
+          <Group header="文章">
+            <Link to="/posts" className="flex min-h-12 items-center justify-between px-4 pressable">
+              <span className="text-[16px]">X 文章</span>
+              <ChevronRight className="size-4 text-subtle/70" />
+            </Link>
+          </Group>
           <Group
             header="识别 BIN"
             footer="贴卡号前 6–8 位。已知 U 卡段走本站表，其他查内置开源库。完整卡号不会保存。"

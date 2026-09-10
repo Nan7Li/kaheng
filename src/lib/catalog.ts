@@ -3,7 +3,7 @@ import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 5;
+export const SEED_REVISION = 6;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -77,6 +77,8 @@ export function normalizeCard(raw: unknown): UCard | null {
     binCode: typeof c.binCode === "string" ? c.binCode : undefined,
     binIssuer: typeof c.binIssuer === "string" ? c.binIssuer : undefined,
     faceUrl: typeof c.faceUrl === "string" ? c.faceUrl : undefined,
+    inviteCode: typeof c.inviteCode === "string" && c.inviteCode ? c.inviteCode : undefined,
+    inviteUrl: typeof c.inviteUrl === "string" && c.inviteUrl ? c.inviteUrl : undefined,
     openingFeeUsd: asNum(c.openingFeeUsd),
     physicalFeeUsd: asNum(c.physicalFeeUsd),
     annualFeeUsd: asNum(c.annualFeeUsd),
@@ -109,6 +111,8 @@ function mergeSeed(stored: UCard[]): UCard[] {
       binCountry: old.binCountry ?? seed.binCountry,
       binCode: old.binCode || seed.binCode,
       binIssuer: old.binIssuer || seed.binIssuer,
+      inviteCode: old.inviteCode || seed.inviteCode,
+      inviteUrl: old.inviteUrl || seed.inviteUrl,
     };
   });
   return [...next, ...stored.filter((c) => !seedSlugs.has(c.slug))];

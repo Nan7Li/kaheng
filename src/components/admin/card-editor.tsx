@@ -363,6 +363,23 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         />
       </Group>
 
+      <Group header="邀请" footer="填你自己的邀请码和链接。对照页不会自动抽成，这只是给你自己用的入口。">
+        <Field
+          label="邀请码"
+          value={draft.inviteCode ?? ""}
+          onChange={(v) => patch("inviteCode", v || undefined)}
+          placeholder="例如 3mQL6"
+        />
+        <Divider />
+        <Field
+          label="邀请链接"
+          value={draft.inviteUrl ?? ""}
+          onChange={(v) => patch("inviteUrl", v || undefined)}
+          placeholder="https://…"
+          type="url"
+        />
+      </Group>
+
       <Group header="卡 BIN" footer="贴卡号前 6–8 位就能识别发卡地和发卡行。订 ChatGPT、绑 Apple ID 时，美区 / 香港差很多。完整卡号不会被保存。">
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-subtle">发卡地</p>

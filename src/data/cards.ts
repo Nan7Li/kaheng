@@ -87,6 +87,8 @@ export interface UCard {
   cons: string[];
   shutdownDate?: string;
   url?: string;
+  inviteCode?: string;
+  inviteUrl?: string;
   sourceUrls?: string[];
   verification?: Verification;
   verifiedAt?: string;
@@ -145,6 +147,7 @@ export const CARDS: UCard[] = [
     sourceUrls: [
       "https://www.mexc.com/learn/article/mexc-card-fees-and-limits-global-card-and-mexc-card-apac-compared/1",
       "https://www.mexc.com/en-GB/learn/article/mexc-card-cashback-4-to-10-back-in-usdt-heres-how-it-works/1",
+      "https://x.com/MEXCZH/status/2094272494211600583",
     ],
     verification: "official",
     verifiedAt: "2026-09-10",
@@ -211,7 +214,7 @@ export const CARDS: UCard[] = [
     network: "visa",
     form: "both",
     status: "active",
-    statusNote: "自托管信用额度；官方帮助页对 Core 发卡费用存在冲突，暂按部分核验。",
+    statusNote: "自托管信用额度。2026-09 起多地返现改为 ETHFI，需自行领取，锁 7 天、满 $5 才能领。官方帮助页对 Core 发卡费仍有冲突，暂按部分核验。",
     category: "defi",
     custody: "self-custody",
     kyc: "passport",
@@ -253,6 +256,7 @@ export const CARDS: UCard[] = [
       "https://help.ether.fi/en/articles/262374-how-does-cashback-work",
       "https://help.ether.fi/en/articles/303623-what-are-the-transaction-limits-and-fees-for-personal-cash-credit-cards",
       "https://help.ether.fi/en/articles/376356-physical-cards-everything-you-need-to-know",
+      "https://x.com/0xVishnya/status/2098004296981795256",
     ],
     verification: "partial",
     verifiedAt: "2026-09-10",
@@ -359,6 +363,7 @@ export const CARDS: UCard[] = [
       "https://www.okx.com/help/what-fees-apply-when-using-my-card",
       "https://www.okx.com/help/okx-card-eea-ongoing-cashback-faq",
       "https://www.okx.com/help/okx-card-subscription-cashback-faq-eea",
+      "https://x.com/okx/status/2097845034355748992",
     ],
     verification: "official",
     verifiedAt: "2026-09-10",
@@ -514,7 +519,10 @@ export const CARDS: UCard[] = [
     pros: ["Apple Pay", "美元返现", "多档金属卡", "FX 相对克制"],
     cons: ["第三方商户有消费门槛", "积分价值不稳定", "托管"],
     url: "https://kast.xyz",
-    updatedAt: "2026-09",
+    sourceUrls: ["https://x.com/KASTxyz", "https://x.com/Urazanev/status/2097997279881838735"],
+    verification: "partial",
+    verifiedAt: "2026-09-10",
+    updatedAt: "2026-09-10",
   },
   {
     slug: "jupiter",
@@ -541,11 +549,11 @@ export const CARDS: UCard[] = [
     spendFeePct: 0,
     fxFeePct: 1.8,
     cashbackPct: 2,
-    cashbackPctHigh: 4,
+    cashbackPctHigh: 2,
     cashbackAmountCapUsd: 100,
-    cashbackAmountCapHighUsd: 200,
+    cashbackAmountCapHighUsd: 100,
     cashbackSpendCapUsd: null,
-    cashbackNote: "基础 2% 月封顶 $100；上月推荐 2 人达标（KYC + 消费 $50）次月 4%、封顶 $200。台湾走 DCS。",
+    cashbackNote: "现行基础 2% USDC，月封顶 $100。推荐 2 人把返现抬到 4% 的阶梯已于 2026-06-30 结束，不能再按 4% 计。台湾 / 亚太 DCS 非美元 FX 1.8%，Rain 通道 1%。",
     assets: ["USDC"],
     scenes: ["daily", "apple"],
     risk: 3,
@@ -553,9 +561,12 @@ export const CARDS: UCard[] = [
     summary: "自托管叙事里费率最老实的一张。美元花 USDC 接近 1:1，台湾用户非美元会吃 1.8%。",
     bestFor: "不想把钱放进交易所的 Solana 用户",
     pros: ["USDC 美元 0 消费费", "返现规则清楚", "资金不在交易所"],
-    cons: ["台湾 DCS 非美元 FX 1.8%", "4% 要靠推荐", "仅虚拟卡"],
+    cons: ["台湾 DCS 非美元 FX 1.8%", "4% 推荐档已结束", "仅虚拟卡"],
     url: "https://jup.ag",
-    updatedAt: "2026-09",
+    sourceUrls: ["https://x.com/RadziSlAU/status/2097640405521080422"],
+    verification: "secondary",
+    verifiedAt: "2026-09-10",
+    updatedAt: "2026-09-10",
   },
   {
     slug: "bitget",

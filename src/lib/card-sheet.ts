@@ -68,6 +68,8 @@ export function serializeCard(card: UCard): string {
 英文名: ${card.nameEn}
 发行方: ${card.issuer}
 官网: ${card.url ?? ""}
+邀请码: ${card.inviteCode ?? ""}
+邀请链接: ${card.inviteUrl ?? ""}
 卡组织: ${card.network}
 形态: ${card.form}
 状态: ${card.status}
@@ -279,6 +281,8 @@ export function parseCardSheet(text: string): UCard {
     nameEn: g("英文名") || base.nameEn,
     issuer: g("发行方") || base.issuer,
     url: g("官网") || undefined,
+    inviteCode: g("邀请码") || undefined,
+    inviteUrl: g("邀请链接") || undefined,
     network: ["visa", "mastercard"].includes(network) ? network : base.network,
     form: ["virtual", "physical", "both"].includes(form) ? form : base.form,
     status: ["active", "restricted", "shutdown"].includes(status) ? status : base.status,

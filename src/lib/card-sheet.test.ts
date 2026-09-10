@@ -31,3 +31,13 @@ test("named levels round-trip through the text sheet", () => {
   assert.equal(parsed.levels?.[4]?.cashbackPct, 5);
 });
 
+test("invite code and link round-trip through the text sheet", () => {
+  const parsed = parseCardSheet(
+    "标识: demo\n中文名: Demo\n邀请码: ABC123\n邀请链接: https://example.com/r/ABC123\n",
+  );
+  assert.equal(parsed.inviteCode, "ABC123");
+  assert.equal(parsed.inviteUrl, "https://example.com/r/ABC123");
+  const again = parseCardSheet(serializeCard(parsed));
+  assert.equal(again.inviteCode, "ABC123");
+  assert.equal(again.inviteUrl, "https://example.com/r/ABC123");
+});

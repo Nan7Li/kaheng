@@ -7,6 +7,7 @@ import { SideNav } from "@/components/side-nav";
 import { TabBar } from "@/components/tab-bar";
 import { DATA_AS_OF } from "@/data/cards";
 import { useCatalog } from "@/lib/catalog";
+import { usePosts } from "@/lib/posts";
 import { useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     useCatalog.getState().hydrate();
+    usePosts.getState().hydrate();
   }, []);
 
   return (

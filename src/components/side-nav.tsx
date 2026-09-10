@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { GitCompareArrows } from "lucide-react";
+import { GitCompareArrows, Newspaper } from "lucide-react";
 import { Wordmark } from "@/components/logo";
 import { TABS, navActive } from "@/components/tab-bar";
 import { DATA_AS_OF } from "@/data/cards";
@@ -39,6 +39,18 @@ export function SideNav() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-3 p-2 pb-3">
+          <Link
+            to="/posts"
+            className={cn(
+              "flex h-11 items-center gap-3 rounded-[20px] px-3 text-[15px] font-semibold transition-colors duration-200",
+              pathname.startsWith("/posts")
+                ? "bg-accent/12 text-accent"
+                : "text-muted hover:bg-surface/70 hover:text-fg",
+            )}
+          >
+            <Newspaper className="size-[22px]" strokeWidth={pathname.startsWith("/posts") ? 2.2 : 1.75} />
+            文章
+          </Link>
           <Link
             to="/compare"
             className={cn(

@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, GitCompareArrows, Pencil } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpRight, Copy, GitCompareArrows, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { FeeStack } from "@/components/fee-stack";
 import { SourcePanel } from "@/components/data-confidence";
 import { Chip, Desk, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { PlasticCard } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
+import { XPostList } from "@/components/x-post-card";
 import {
   CATEGORY_LABEL,
   CUSTODY_LABEL,
@@ -24,6 +26,7 @@ import {
   resolveLevels,
 } from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
+import { postsForCard, usePosts } from "@/lib/posts";
 import { useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +42,12 @@ function CardDetail() {
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
   const [levelId, setLevelId] = useState<string | null>(null);
+  const posts = usePosts((s) => s.posts);
+  const hydratePosts = usePosts((s) => s.hydrate);
+
+  useEffect(() => {
+    hydratePosts();
+  }, [hydratePosts]);
 
   if (!card) {
     return (
@@ -248,6 +257,34 @@ function CardDetail() {
           <SourcePanel card={card} />
         </Group>
 
+        <Group
+          header="邀请"
+          footer="这里只放你自己填的码和链接。卡衡不抽成，也没有默认返佣。"
+        >
+          <InviteRow
+            label="邀请码"
+            value={card.inviteCode}
+            empty="在管理页填自己的码"
+          />
+          <div className="ml-4 h-px bg-border" />
+          <InviteRow
+            label="邀请链接"
+            value={card.inviteUrl}
+            href={card.inviteUrl}
+            empty="在管理页贴自己的链接"
+          />
+        </Group>
+
+        <Group
+          header="相关文章"
+          footer="从「X 文章」页添加，把帖子挂到这张卡。"
+        >
+          <XPostList
+            posts={postsForCard(posts, card.slug)}
+            empty="还没有挂文章。去 X 文章页贴链接。"
+          />
+        </Group>
+
         <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
           <Group header="优点">
             {(card.pros?.length ? card.pros : ["—"]).map((p, i) => (
@@ -284,5 +321,54 @@ function CardDetail() {
         </Group>
       </Desk>
     </Page>
+  );
+}
+
+function InviteRow({
+  label,
+  value,
+  href,
+  empty,
+}: {
+  label: string;
+  value?: string;
+  href?: string;
+  empty: string;
+}) {
+  async function copy() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("已复制");
+    } catch {
+      toast.error("复制失败");
+    }
+  }
+
+  return (
+    <div className="flex min-h-12 items-center gap-3 px-4 py-2.5">
+      <span className="w-[5.5rem] shrink-0 text-[13px] text-subtle">{label}</span>
+      {value ? (
+        href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="min-w-0 flex-1 truncate text-[15px] text-accent"
+          >
+            {value}
+          </a>
+        ) : (
+          <span className="min-w-0 flex-1 truncate font-mono text-[15px]">{value}</span>
+        )
+      ) : (
+        <span className="min-w-0 flex-1 text-[15px] text-subtle">{empty}</span>
+      )}
+      {value && (
+        <button type="button" onClick={() => void copy()} className="shrink-0 text-accent pressable" aria-label="复制">
+          <Copy className="size-4" />
+        </button>
+      )}
+    </div>
   );
 }
