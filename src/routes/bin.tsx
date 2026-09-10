@@ -16,43 +16,15 @@ function BinPage() {
       <LargeTitle eyebrow="只填前 6–8 位">识别 BIN</LargeTitle>
       <Fade>
         <p className="mb-5 max-w-xl text-[17px] leading-relaxed text-muted">
-          发卡地决定 ChatGPT、Apple ID 能不能过。完整卡号不会保存，多出来的数字当场丢掉。GitHub
-          上没有专门的 U 卡 BIN 库；公共查询走 binlist.net（客户端{" "}
-          <a
-            href="https://github.com/paylike/binlookup"
-            className="text-accent"
-            target="_blank"
-            rel="noreferrer"
-          >
-            paylike/binlookup
-          </a>
-          ），开源数据集还有{" "}
-          <a
-            href="https://github.com/binlist/data"
-            className="text-accent"
-            target="_blank"
-            rel="noreferrer"
-          >
-            binlist/data
-          </a>{" "}
-          和{" "}
-          <a
-            href="https://github.com/Techbuddie-Solutions/binlist-data"
-            className="text-accent"
-            target="_blank"
-            rel="noreferrer"
-          >
-            binlist-data
-          </a>
-          。U 卡段靠本站对照。
+          发卡地决定 ChatGPT、Apple ID 能不能过。完整卡号不会保存，多出来的数字当场丢掉。本站只收对得上的 U 卡段；其他前缀查公共库，额度用完时至少告诉你 Visa 还是 Mastercard。
         </p>
       </Fade>
 
-      <Group header="查卡段" footer="已知 U 卡段走本站表；其他前缀查 binlist.net（与 GitHub paylike/binlookup 同一份库）。">
+      <Group header="查卡段" footer="已知 U 卡段走本站表。其他前缀查公共库；额度用完时按卡号前缀判断卡组织。">
         <BinLookup auto />
       </Group>
 
-      <Group header="本站已知 U 卡段" footer="社区反馈和 binlist 对得上的才收进来。没有的段，贴前 6 位就能查公共库。">
+      <Group header="本站已知 U 卡段" footer="社区反馈和公共库对得上的才收进来。没有的段，贴前 6 位也能查。">
         {KNOWN_BINS.map((row, i) => {
           const card = row.cardSlug ? cards.find((c) => c.slug === row.cardSlug) : undefined;
           return (

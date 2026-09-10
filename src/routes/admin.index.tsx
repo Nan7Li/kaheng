@@ -98,7 +98,7 @@ function AdminPage() {
         <div>
           <Group
             header="识别 BIN"
-            footer="贴卡号前 6–8 位。数据来自本站已知 U 卡段和 binlist.net。完整卡号不会保存。"
+            footer="贴卡号前 6–8 位。已知 U 卡段走本站表，其他查公共库。完整卡号不会保存。"
           >
             <BinLookup />
           </Group>

@@ -5,12 +5,14 @@ import type { BinCountry, Network, UCard } from "@/data/cards";
 import { BIN_COUNTRY_LABEL } from "@/data/cards";
 import {
   digitsOnly,
-  fetchBinlist,
+  fetchHandyApi,
   formatBinHit,
   hitFromKnown,
   matchCatalog,
   matchKnownBin,
   networkFromScheme,
+  prefixHit,
+  sourceLabel,
   type BinHit,
 } from "@/lib/bin";
 import { lookupBin } from "@/lib/bin.functions";
@@ -25,7 +27,9 @@ function readCache(bin: string): BinHit | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const map = JSON.parse(raw) as Record<string, BinHit>;
-    return map[bin] ?? null;
+    const hit = map[bin];
+    if (!hit || hit.source === "prefix") return null;
+    return hit;
   } catch {
     return null;
   }
@@ -33,6 +37,7 @@ function readCache(bin: string): BinHit | null {
 
 function writeCache(hit: BinHit) {
   if (typeof window === "undefined") return;
+  if (hit.source === "prefix") return;
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     const map = raw ? (JSON.parse(raw) as Record<string, BinHit>) : {};
@@ -84,13 +89,13 @@ export async function identifyBin(raw: string, cards: UCard[]): Promise<BinHit> 
     writeCache(hit);
     return hit;
   } catch {
-    const live = await fetchBinlist(bin);
-    if (live) {
-      const hit = attach(live);
+    const handy = await fetchHandyApi(bin);
+    if ("hit" in handy) {
+      const hit = attach(handy.hit);
       writeCache(hit);
       return hit;
     }
-    throw new Error("查不到这个 BIN");
+    return attach(prefixHit(bin, "rate" in handy ? "rate" : "miss"));
   }
 }
 
@@ -115,7 +120,7 @@ export function BinLookup({
       toast.error("至少输入卡号前 6 位");
       return;
     }
-    if (last.current === bin && hit) return;
+    if (last.current === bin && hit && hit.source !== "prefix") return;
     setBusy(true);
     try {
       const next = await identifyBin(bin, cards);
@@ -179,7 +184,7 @@ export function BinLookup({
             {hit.type && <Tag>{hit.type}</Tag>}
             {hit.prepaid === true && <Tag>Prepaid</Tag>}
             {hit.prepaid === false && <Tag>非预付</Tag>}
-            <Tag>{hit.source === "known" ? "本站已知段" : "binlist.net"}</Tag>
+            <Tag>{sourceLabel(hit.source)}</Tag>
           </div>
           {hit.cardSlug && (
             <p className="mt-2 text-[13px] text-muted">

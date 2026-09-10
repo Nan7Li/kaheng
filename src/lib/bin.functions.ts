@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   digitsOnly,
-  fetchBinlist,
   hitFromKnown,
+  lookupLive,
   matchKnownBin,
-  schemeFromPrefix,
+  resolveLive,
   type BinHit,
 } from "./bin.ts";
 
@@ -23,16 +23,5 @@ export const lookupBin = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BinHit> => {
     const known = matchKnownBin(data.bin);
     if (known) return hitFromKnown(known, data.bin);
-    const live = await fetchBinlist(data.bin);
-    if (live) return live;
-    const scheme = schemeFromPrefix(data.bin);
-    if (scheme === "unknown") throw new Error("查不到这个 BIN");
-    return {
-      bin: data.bin,
-      scheme,
-      country: "unknown",
-      countryName: "未收录",
-      source: "binlist",
-      note: "公共库没有发卡行，只根据卡号前缀判断了卡组织。",
-    };
+    return resolveLive(data.bin, await lookupLive(data.bin));
   });

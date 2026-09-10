@@ -9,7 +9,12 @@ import {
   matchCatalog,
   matchKnownBin,
   networkFromScheme,
+  parseBinlistPayload,
+  parseHandyPayload,
+  prefixHit,
+  resolveLive,
   schemeFromPrefix,
+  sourceLabel,
 } from "./bin.ts";
 
 test("strips PAN to at most 8 digits", () => {
@@ -55,4 +60,56 @@ test("known PokePay prefix is US Mastercard", () => {
   assert.equal(known?.scheme, "mastercard");
   assert.equal(known?.country, "us");
   assert.equal(matchCatalog("559666", CARDS)?.slug, "pokepay");
+});
+
+test("HandyAPI success payload maps Denmark to EEA Visa", () => {
+  const hit = parseHandyPayload("457173", {
+    Status: "SUCCESS",
+    Scheme: "VISA",
+    Type: "DEBIT",
+    Issuer: "DJURSLANDS BANK",
+    CardTier: "DANKORT",
+    Country: { A2: "DK", Name: "Denmark" },
+  });
+  assert.ok(hit && hit !== "rate");
+  assert.equal(hit.scheme, "visa");
+  assert.equal(hit.country, "eea");
+  assert.equal(hit.bank, "DJURSLANDS BANK");
+  assert.equal(hit.source, "live");
+});
+
+test("HandyAPI rate-limit status is not treated as a miss", () => {
+  assert.equal(
+    parseHandyPayload("411111", {
+      Status: "RATE LIMIT EXCEEDED: Please contact us or upgrade plan",
+    }),
+    "rate",
+  );
+});
+
+test("binlist payload keeps Puerto Rico as a US-adjacent BIN", () => {
+  const hit = parseBinlistPayload("454924", {
+    scheme: "visa",
+    type: "credit",
+    brand: "Visa Platinum",
+    country: { alpha2: "PR", name: "Puerto Rico" },
+    bank: { name: "Bivo, Inc." },
+  });
+  assert.ok(hit);
+  assert.equal(hit.country, "pr");
+  assert.equal(hit.bank, "Bivo, Inc.");
+});
+
+test("rate-limited live lookup still reports Visa from the prefix", () => {
+  const hit = resolveLive("411111", { rate: true });
+  assert.equal(hit.scheme, "visa");
+  assert.equal(hit.source, "prefix");
+  assert.equal(sourceLabel(hit.source), "仅卡组织");
+  assert.match(hit.note ?? "", /额度用完/);
+});
+
+test("missing live record still reports Mastercard from the prefix", () => {
+  const hit = prefixHit("555555", "miss");
+  assert.equal(hit.scheme, "mastercard");
+  assert.match(formatBinHit(hit), /Mastercard/);
 });
