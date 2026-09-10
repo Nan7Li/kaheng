@@ -22,10 +22,12 @@ test("named levels round-trip through the text sheet", () => {
   const source = CARDS.find((card) => card.slug === "cryptocom");
   assert.ok(source);
   const parsed = parseCardSheet(serializeCard(source));
-  assert.equal(parsed.levels?.length, 4);
+  assert.equal(parsed.levels?.length, 5);
   assert.equal(parsed.levels?.[0]?.id, "midnight");
   assert.equal(parsed.levels?.[0]?.fxFeePct, 2.5);
   assert.equal(parsed.levels?.[3]?.id, "icy");
-  assert.equal(parsed.levels?.[3]?.cashbackPct, 5);
+  assert.equal(parsed.levels?.[3]?.cashbackPct, 4);
+  assert.equal(parsed.levels?.[4]?.id, "obsidian");
+  assert.equal(parsed.levels?.[4]?.cashbackPct, 5);
 });
 

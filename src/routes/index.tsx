@@ -140,6 +140,11 @@ function Home() {
           </Group>
 
           <Group>
+            <Link to="/bin" className="flex min-h-12 items-center justify-between px-4 pressable">
+              <span className="text-[16px]">识别卡 BIN</span>
+              <ArrowRight className="size-4 text-subtle" />
+            </Link>
+            <div className="ml-4 h-px bg-border" />
             <Link to="/admin" className="flex min-h-12 items-center justify-between px-4 pressable">
               <span className="text-[16px]">管理卡资料</span>
               <ArrowRight className="size-4 text-subtle" />

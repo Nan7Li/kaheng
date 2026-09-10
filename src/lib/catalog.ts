@@ -3,7 +3,7 @@ import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 4;
+export const SEED_REVISION = 5;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];

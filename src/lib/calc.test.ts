@@ -90,10 +90,10 @@ test("Crypto.com Midnight FX is not applied on USD bills", () => {
   assert.equal(midnight.fx, 0);
   assert.equal(midnight.cashback, 0);
   assert.equal(icyLocal.fx, 0);
-  assert.equal(icyLocal.cashback, 50);
+  assert.equal(icyLocal.cashback, 40);
 });
 
-test("RedotPay Pro monthly fee is amortized into net", () => {
+test("RedotPay conversion is not mislabeled as a spend fee", () => {
   const standard = calcCard(card("redotpay"), {
     spend: 1000,
     bill: "usd",
@@ -105,7 +105,23 @@ test("RedotPay Pro monthly fee is amortized into net", () => {
     tier: "boost",
   });
   assert.equal(standard.levelName, "标准卡");
+  assert.equal(standard.conversion, 10);
+  assert.equal(standard.spendFee, 0);
+  assert.equal(standard.cashback, 0);
   assert.equal(pro.levelName, "Pro");
+  assert.equal(pro.cashback, 20);
   assert.ok(pro.amortized - standard.amortized > 12);
+});
+
+test("ether.fi Core FX is 1% and cashback is capped by spend band", () => {
+  const usd = calcCard(card("etherfi"), { spend: 1000, bill: "usd", tier: "entry" });
+  const local = calcCard(card("etherfi"), { spend: 1000, bill: "local", tier: "entry" });
+  const vip = calcCard(card("etherfi"), { spend: 1000, bill: "usd", tier: "boost" });
+  assert.equal(usd.levelName, "Core");
+  assert.equal(usd.cashback, 30);
+  assert.equal(usd.fx, 0);
+  assert.equal(local.fx, 10);
+  assert.equal(vip.levelName, "VIP");
+  assert.equal(vip.cashback, 40);
 });
 

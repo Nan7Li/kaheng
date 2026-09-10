@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BinLookup } from "@/components/bin-lookup";
 import { Divider, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { CardThumb } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,12 @@ function AdminPage() {
         </Group>
 
         <div>
+          <Group
+            header="识别 BIN"
+            footer="贴卡号前 6–8 位。数据来自本站已知 U 卡段和 binlist.net。完整卡号不会保存。"
+          >
+            <BinLookup />
+          </Group>
           <Group
             header="单卡文本"
             footer="点进某一张卡也可以复制 / 下载。格式以「# 卡衡单卡 v1」开头，改完原样贴回即可。"

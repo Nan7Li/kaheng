@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as BinRouteImport } from './routes/bin'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuideRouteImport } from './routes/guide'
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BinRoute = BinRouteImport.update({
+  id: '/bin',
+  path: '/bin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CardsRoute = CardsRouteImport.update({
@@ -74,6 +80,7 @@ const CardSlugRoute = CardSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/bin': typeof BinRoute
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bin': typeof BinRoute
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/bin': typeof BinRoute
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/bin'
     | '/cards'
     | '/compare'
     | '/guide'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bin'
     | '/cards'
     | '/compare'
     | '/guide'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/bin'
     | '/cards'
     | '/compare'
     | '/guide'
@@ -148,6 +160,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  BinRoute: typeof BinRoute
   CardsRoute: typeof CardsRoute
   CompareRoute: typeof CompareRoute
   GuideRoute: typeof GuideRoute
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bin': {
+      id: '/bin'
+      path: '/bin'
+      fullPath: '/bin'
+      preLoaderRoute: typeof BinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cards': {
@@ -247,6 +267,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  BinRoute: BinRoute,
   CardsRoute: CardsRoute,
   CompareRoute: CompareRoute,
   GuideRoute: GuideRoute,

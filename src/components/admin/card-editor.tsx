@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { ClipboardPaste, Copy, Download, ImagePlus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { applyHitToDraft, identifyBin } from "@/components/bin-lookup";
 import { Area, Divider, Field, Group, Row, Segmented } from "@/components/ios";
 import { PlasticCard } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,9 @@ import {
   parseImportPayload,
   serializeCard,
 } from "@/lib/card-sheet";
-import { useCatalog } from "@/lib/catalog";
 import { compressFace } from "@/lib/face";
+import { digitsOnly } from "@/lib/bin";
+import { useCatalog } from "@/lib/catalog";
 
 const SCENES: Scene[] = ["ai", "daily", "apple", "ads", "offramp"];
 const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "sg", "us", "eea", "global"];
@@ -57,12 +59,31 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     binIssuer: seedBin.binIssuer ?? "",
   });
   const [paste, setPaste] = useState("");
+  const [binBusy, setBinBusy] = useState(false);
   const upsert = useCatalog((s) => s.upsert);
   const remove = useCatalog((s) => s.remove);
   const navigate = useNavigate();
 
   function patch<K extends keyof UCard>(key: K, value: UCard[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
+  }
+
+  async function identifyDraftBin(raw?: string) {
+    const bin = digitsOnly(raw ?? draft.binCode ?? "");
+    if (bin.length < 6) {
+      toast.error("至少输入卡号前 6 位");
+      return;
+    }
+    setBinBusy(true);
+    try {
+      const hit = await identifyBin(bin, useCatalog.getState().cards);
+      applyHitToDraft(hit, (key, value) => patch(key, value as never));
+      toast.success(`已填入 ${hit.countryName} · ${hit.bank ?? hit.scheme}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "查不到这个 BIN");
+    } finally {
+      setBinBusy(false);
+    }
   }
 
   function patchLevel(id: string, next: Partial<CardLevel>) {
@@ -342,7 +363,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         />
       </Group>
 
-      <Group header="卡 BIN" footer="BIN 是卡号前几位对应的发卡地。订 ChatGPT、绑 Apple ID 时，美区 / 香港差很多。">
+      <Group header="卡 BIN" footer="贴卡号前 6–8 位就能识别发卡地和发卡行。订 ChatGPT、绑 Apple ID 时，美区 / 香港差很多。完整卡号不会被保存。">
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-subtle">发卡地</p>
           <div className="flex flex-wrap gap-1.5">
@@ -363,18 +384,34 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
           </div>
         </div>
         <Divider />
-        <Field
-          label="BIN 号"
-          value={draft.binCode ?? ""}
-          onChange={(v) => patch("binCode", v || undefined)}
-          placeholder="454924"
-        />
+        <div className="flex items-center gap-2 px-4 py-2">
+          <span className="w-[6.5rem] shrink-0 text-[15px] text-fg">BIN 号</span>
+          <input
+            value={draft.binCode ?? ""}
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="454924"
+            onChange={(e) => patch("binCode", digitsOnly(e.target.value) || undefined)}
+            onBlur={() => {
+              if (digitsOnly(draft.binCode ?? "").length >= 6) void identifyDraftBin();
+            }}
+            className="h-10 min-w-0 flex-1 bg-transparent text-right font-mono text-[16px] tracking-wide text-fg outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-subtle"
+          />
+          <button
+            type="button"
+            disabled={binBusy}
+            onClick={() => void identifyDraftBin()}
+            className="h-8 shrink-0 rounded-full bg-accent px-3 text-[13px] font-medium text-accent-fg pressable disabled:opacity-60"
+          >
+            {binBusy ? "识别中" : "识别"}
+          </button>
+        </div>
         <Divider />
         <Field
           label="发卡行"
           value={draft.binIssuer ?? ""}
           onChange={(v) => patch("binIssuer", v || undefined)}
-          placeholder="Rain / Fiat24 / 香港"
+          placeholder="Rain / Reap / Bivo"
         />
       </Group>
 
