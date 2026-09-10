@@ -1,0 +1,110 @@
+name: Bind stelloras.com to kaheng
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attach custom domains and DNS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python3 <<'PY'
+          import json, os, time, urllib.error, urllib.request
+
+          token = os.environ['CLOUDFLARE_API_TOKEN']
+          account = os.environ['CLOUDFLARE_ACCOUNT_ID']
+          zone_id = 'df735699ba37a7ade7e4d65c0c665471'
+          project = 'kaheng'
+          target = 'kaheng.pages.dev'
+          hosts = ['stelloras.com', 'www.stelloras.com']
+
+          def req(method, url, data=None):
+              request = urllib.request.Request(
+                  url,
+                  data=None if data is None else json.dumps(data).encode(),
+                  method=method,
+              )
+              request.add_header('Authorization', f'Bearer {token}')
+              request.add_header('Content-Type', 'application/json')
+              try:
+                  with urllib.request.urlopen(request) as resp:
+                      return resp.status, json.load(resp)
+              except urllib.error.HTTPError as err:
+                  body = err.read().decode()
+                  try:
+                      parsed = json.loads(body)
+                  except json.JSONDecodeError:
+                      parsed = {'success': False, 'errors': [{'message': body[:500]}]}
+                  return err.code, parsed
+
+          def fail_if(body, label):
+              if not body.get('success', True) and body.get('errors'):
+                  print(label, json.dumps({'errors': body.get('errors'), 'messages': body.get('messages')}))
+
+          st, recs = req('GET', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?per_page=100')
+          print('LIST_DNS', st)
+          fail_if(recs, 'LIST_DNS')
+          for rec in recs.get('result') or []:
+              name = rec.get('name')
+              rtype = rec.get('type')
+              rid = rec.get('id')
+              content = rec.get('content')
+              if name == 'stelloras.com' and rtype in ('A', 'AAAA'):
+                  st, body = req('DELETE', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{rid}')
+                  print('DELETE', rtype, name, content, st, body.get('success'))
+              elif name == 'www.stelloras.com' and rtype in ('A', 'AAAA', 'CNAME') and content != target:
+                  st, body = req('DELETE', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{rid}')
+                  print('DELETE', rtype, name, content, st, body.get('success'))
+              elif name == 'stelloras.com' and rtype == 'CNAME' and content != target:
+                  st, body = req('DELETE', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{rid}')
+                  print('DELETE', rtype, name, content, st, body.get('success'))
+
+          pages_base = f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/{project}/domains'
+          for host in hosts:
+              st, body = req('POST', pages_base, {'name': host})
+              print('PAGES_DOMAIN', host, st, body.get('success'), (body.get('result') or {}).get('status'))
+              fail_if(body, f'PAGES_DOMAIN {host}')
+
+          st, recs = req('GET', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?per_page=100')
+          existing = {(r.get('type'), r.get('name')): r for r in recs.get('result') or []}
+          for host in hosts:
+              rec = existing.get(('CNAME', host))
+              if rec and rec.get('content') == target:
+                  print('CNAME_OK', host)
+                  continue
+              payload = {'type': 'CNAME', 'name': host, 'content': target, 'proxied': True, 'ttl': 1}
+              st, body = req('POST', f'https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records', payload)
+              print('CREATE_CNAME', host, st, body.get('success'))
+              fail_if(body, f'CREATE_CNAME {host}')
+
+          for host in hosts:
+              for _ in range(24):
+                  st, body = req('GET', f'{pages_base}/{host}')
+                  status = (body.get('result') or {}).get('status')
+                  print('STATUS', host, status)
+                  if status == 'active':
+                      break
+                  if status in ('error', 'blocked', 'deactivated'):
+                      req('PATCH', f'{pages_base}/{host}', {})
+                  time.sleep(5)
+
+          import subprocess
+          for host in hosts:
+              for path in ['/', '/cards', '/guide', '/admin']:
+                  url = f'https://{host}{path}'
+                  try:
+                      out = subprocess.check_output(
+                          ['curl', '-sS', '-o', '/tmp/body.html', '-w', '%{http_code}', '--max-time', '20', url],
+                          text=True,
+                      )
+                      with open('/tmp/body.html', 'r', encoding='utf-8', errors='replace') as f:
+                          html = f.read()
+                      title = '卡衡' if '卡衡' in html else 'NO_TITLE'
+                      print('HTTP', out, url, title)
+                  except subprocess.CalledProcessError as err:
+                      print('HTTP_FAIL', url, err.returncode)
+          PY
