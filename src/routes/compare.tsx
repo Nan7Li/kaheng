@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { CUSTODY_LABEL, KYC_LABEL, STATUS_LABEL, formatBin, type UCard } from "@/data/cards";
 import { calcCard, effectiveFees, pickLevel, type Tier } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
-import { useDesk } from "@/lib/store";
+import { cardMoney } from "@/lib/money";
+import { SETTLEMENT_LABEL } from "@/lib/rates";
+import { useCalcInput, useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/compare")({ component: ComparePage });
@@ -45,6 +47,14 @@ const ROWS: Array<{ label: string; render: (c: UCard, tier: Tier) => string }> =
   },
   { label: "币种转换", render: (c) => `${c.cryptoConversionFeePct ?? 0}%` },
   {
+    label: "结算币",
+    render: (c) => SETTLEMENT_LABEL[cardMoney(c).settlement],
+  },
+  {
+    label: "扣款币",
+    render: (c) => cardMoney(c).nativeAsset,
+  },
+  {
     label: "消费费",
     render: (c, t) => `${effectiveFees(c, pickLevel(c, t)).spendFeePct}%`,
   },
@@ -58,13 +68,10 @@ const ROWS: Array<{ label: string; render: (c: UCard, tier: Tier) => string }> =
 
 function ComparePage() {
   const selected = useDesk((s) => s.selected);
-  const spend = useDesk((s) => s.spend);
-  const bill = useDesk((s) => s.bill);
-  const tier = useDesk((s) => s.tier);
-  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const toggle = useDesk((s) => s.toggleSelected);
   const cards = useCatalog((s) => s.cards);
-  const input = { spend, bill, tier, includePhysicalFee };
+  const input = useCalcInput();
+  const tier = input.tier;
   const picked = selected
     .map((slug) => cards.find((c) => c.slug === slug))
     .filter((c): c is UCard => Boolean(c));
