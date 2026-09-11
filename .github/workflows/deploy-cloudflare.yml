@@ -84,6 +84,19 @@ jobs:
           status, body = req("GET", f"{base}/{name}")
           if status == 200 and body.get("success"):
               print("Pages project kaheng already exists")
+              # Keep dashboard-managed variables (including ADMIN_EMAIL or
+              # ADMIN_USER_ID) when refreshing the project settings. Sending a
+              # replacement env_vars map here would silently remove them on
+              # the next GitHub push.
+              existing = body.get("result") or {}
+              existing_configs = existing.get("deployment_configs") or {}
+              for env_name in ("production", "preview"):
+                  current = existing_configs.get(env_name) or {}
+                  current_vars = current.get("env_vars") or {}
+                  payload["deployment_configs"][env_name]["env_vars"] = {
+                      **current_vars,
+                      "NODE_VERSION": {"type": "plain_text", "value": "22"},
+                  }
               status, body = req("PATCH", f"{base}/{name}", payload)
               print(f"Patched project settings HTTP {status}")
           else:
@@ -107,3 +120,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           command: pages deploy dist --project-name=kaheng --commit-dirty=true
+
