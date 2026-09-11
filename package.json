@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
     "check:data": "node --experimental-strip-types scripts/validate-card-data.mts",
-    "test": "node --test scripts/browser-smoke-verdict.test.mjs scripts/migration-plan.test.mjs scripts/sign-out-plan.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/bin.test.ts src/lib/calc.test.ts src/lib/card-sheet.test.ts src/lib/x-post.test.ts",
+    "test": "node --test scripts/browser-smoke-verdict.test.mjs scripts/migration-plan.test.mjs scripts/sign-out-plan.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/bin.test.ts src/lib/calc.test.ts src/lib/card-sheet.test.ts src/lib/public-api.test.ts src/lib/x-post.test.ts",
     "test:template": "node --test 'scripts/**/*.test.mjs'",
     "bin:index": "python3 scripts/build-bin-index.py",
     "check": "npm run check:data && npm run typecheck && npm run lint && npm test && npm run build:cf",
