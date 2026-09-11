@@ -35,7 +35,10 @@ test("maps issuer countries used by U cards", () => {
   assert.equal(countryFromAlpha2("HK"), "hk");
   assert.equal(countryFromAlpha2("PR"), "pr");
   assert.equal(countryFromAlpha2("US"), "us");
-  assert.equal(countryFromAlpha2("DE"), "eea");
+  assert.equal(countryFromAlpha2("DE"), "de");
+  assert.equal(countryFromAlpha2("TW"), "tw");
+  assert.equal(countryFromAlpha2("JP"), "jp");
+  assert.equal(countryFromAlpha2("AE"), "ae");
   assert.equal(countryFromAlpha2("GE"), "ge");
 });
 
@@ -150,3 +153,4 @@ test("index record parser maps scheme letter and bank table", () => {
   assert.equal(hit.bank, "DEN JYSKE SPAREKASSE");
   assert.equal(sourceLabel("index"), "开源库");
 });
+

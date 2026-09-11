@@ -385,7 +385,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         />
       </Group>
 
-      <Group header="卡 BIN" footer="贴卡号前 6–8 位就能识别发卡地和发卡行。订 ChatGPT、绑 Apple ID 时，美区 / 香港差很多。完整卡号不会被保存。">
+      <Group header="卡 BIN" footer="贴卡号前 6–8 位就能识别发卡地和发卡行。已补充常见国家；查不到具体国家时可选多地或未标注。完整卡号不会被保存。">
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-subtle">发卡地</p>
           <div className="flex flex-wrap gap-1.5">

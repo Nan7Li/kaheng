@@ -105,6 +105,29 @@ const ALPHA_TO_BIN: Record<string, BinCountry> = {
   AU: "au",
   GE: "ge",
   KZ: "kz",
+  CN: "cn",
+  TW: "tw",
+  JP: "jp",
+  KR: "kr",
+  CA: "ca",
+  DE: "de",
+  FR: "fr",
+  NL: "nl",
+  IE: "ie",
+  LT: "lt",
+  ES: "es",
+  IT: "it",
+  MY: "my",
+  TH: "th",
+  IN: "in",
+  AE: "ae",
+  NZ: "nz",
+  MX: "mx",
+  BR: "br",
+  ZA: "za",
+  TR: "tr",
+  PH: "ph",
+  ID: "id",
 };
 
 export function digitsOnly(raw: string): string {
@@ -366,3 +389,4 @@ export function resolveLive(bin: string, live: LiveLookup): BinHit {
   if ("hit" in live) return live.hit;
   return prefixHit(bin, "rate" in live ? "rate" : "miss");
 }
+

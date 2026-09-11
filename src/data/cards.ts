@@ -19,6 +19,29 @@ export type BinCountry =
   | "au"
   | "ge"
   | "kz"
+  | "cn"
+  | "tw"
+  | "jp"
+  | "kr"
+  | "ca"
+  | "de"
+  | "fr"
+  | "nl"
+  | "ie"
+  | "lt"
+  | "es"
+  | "it"
+  | "my"
+  | "th"
+  | "in"
+  | "ae"
+  | "nz"
+  | "mx"
+  | "br"
+  | "za"
+  | "tr"
+  | "ph"
+  | "id"
   | "mixed"
   | "unknown";
 
@@ -1439,6 +1462,29 @@ export const BIN_COUNTRY_LABEL: Record<BinCountry, string> = {
   au: "澳洲 BIN",
   ge: "格鲁吉亚 BIN",
   kz: "哈萨克 BIN",
+  cn: "中国 BIN",
+  tw: "台湾 BIN",
+  jp: "日本 BIN",
+  kr: "韩国 BIN",
+  ca: "加拿大 BIN",
+  de: "德国 BIN",
+  fr: "法国 BIN",
+  nl: "荷兰 BIN",
+  ie: "爱尔兰 BIN",
+  lt: "立陶宛 BIN",
+  es: "西班牙 BIN",
+  it: "意大利 BIN",
+  my: "马来西亚 BIN",
+  th: "泰国 BIN",
+  in: "印度 BIN",
+  ae: "阿联酋 BIN",
+  nz: "新西兰 BIN",
+  mx: "墨西哥 BIN",
+  br: "巴西 BIN",
+  za: "南非 BIN",
+  tr: "土耳其 BIN",
+  ph: "菲律宾 BIN",
+  id: "印尼 BIN",
   mixed: "多地 BIN",
   unknown: "BIN 未标注",
 };
