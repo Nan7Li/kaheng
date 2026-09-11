@@ -17,6 +17,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     useCatalog.getState().hydrate();
     usePosts.getState().hydrate();
+    useDesk.getState().hydrateRates();
   }, []);
 
   return (

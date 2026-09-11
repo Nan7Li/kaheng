@@ -50,6 +50,10 @@ export function RankList({
                       ? `${row.result.levelName}${feesVaryByLevel(row.card) ? " · 磨损随档" : ""}`
                       : formatBin(row.card)}
                     {row.card.status === "restricted" ? ` · ${STATUS_LABEL.restricted}` : ""}
+                    {row.result.settlement !== "USD" ? ` · ${row.result.settlement}` : ""}
+                    {row.result.nativeAsset === "USDG" || row.result.nativeAsset === "EURe"
+                      ? ` · ${row.result.nativeAsset}`
+                      : ""}
                   </span>
                   <VerificationBadge card={row.card} compact />
                 </div>
@@ -97,6 +101,10 @@ export function RankList({
                           <span className="truncate">
                             {formatBin(row.card)}
                             {row.card.status === "restricted" ? ` · ${STATUS_LABEL.restricted}` : ""}
+                            {row.result.settlement !== "USD" ? ` · ${row.result.settlement}` : ""}
+                            {row.result.nativeAsset === "USDG" || row.result.nativeAsset === "EURe"
+                              ? ` · ${row.result.nativeAsset}`
+                              : ""}
                           </span>
                           <VerificationBadge card={row.card} compact />
                         </span>
