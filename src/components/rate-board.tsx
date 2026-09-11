@@ -9,6 +9,7 @@ function asOfLabel(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleString("zh-CN", {
+    timeZone: "Asia/Shanghai",
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
@@ -91,3 +92,4 @@ export function RateBoard() {
     </div>
   );
 }
+
