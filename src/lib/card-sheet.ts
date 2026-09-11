@@ -15,6 +15,7 @@ import {
   type Verification,
 } from "../data/cards.ts";
 import { createBlankCard, normalizeCard } from "./catalog.ts";
+import { cardMoney } from "./money.ts";
 
 export const SHEET_HEADER = `# 卡衡单卡 v1
 # 把整段复制发给其他 AI 核对或修改，改完原样贴回即可导入。
@@ -62,6 +63,7 @@ export function serializeCard(card: UCard): string {
   };
   const pros = (card.pros ?? []).map((p) => `- ${p}`).join("\n") || "- ";
   const cons = (card.cons ?? []).map((p) => `- ${p}`).join("\n") || "- ";
+  const money = cardMoney(card);
   return `${SHEET_HEADER}
 标识: ${card.slug}
 中文名: ${card.name}
@@ -95,6 +97,10 @@ BIN号: ${bin.binCode}
 活动消费费: ${numOrEmpty(card.promoSpendFeePct)}
 活动截止: ${card.promoUntil ?? ""}
 FX: ${card.fxFeePct}
+结算币: ${card.settlement ?? money.settlement}
+扣款币: ${card.nativeAsset ?? money.nativeAsset}
+锚定: ${card.pegPolicy ?? money.peg}
+免FX: ${list(card.fxFree ?? money.fxFree)}
 入门返现: ${card.cashbackPct}
 进阶返现: ${card.cashbackPctHigh}
 入门封顶: ${numOrEmpty(card.cashbackAmountCapUsd)}
@@ -308,6 +314,18 @@ export function parseCardSheet(text: string): UCard {
     promoSpendFeePct: g("活动消费费") === "" ? undefined : parseNum(g("活动消费费")),
     promoUntil: g("活动截止") || undefined,
     fxFeePct: parseNum(g("FX")),
+    settlement: (["USD", "EUR", "SGD", "GBP"].includes(g("结算币"))
+      ? g("结算币")
+      : undefined) as UCard["settlement"],
+    nativeAsset: (["USDT", "USDC", "USDG", "EURe"].includes(g("扣款币"))
+      ? g("扣款币")
+      : undefined) as UCard["nativeAsset"],
+    pegPolicy: (g("锚定") === "one-to-one" || g("锚定") === "官方1:1" || g("锚定") === "1:1"
+      ? "one-to-one"
+      : g("锚定") === "market" || g("锚定") === "市价"
+        ? "market"
+        : undefined),
+    fxFree: splitList(g("免FX")).length ? splitList(g("免FX")) : undefined,
     cashbackPct: parseNum(g("入门返现")),
     cashbackPctHigh: parseNum(g("进阶返现")),
     cashbackAmountCapUsd: parseNullNum(g("入门封顶")),
