@@ -17,17 +17,12 @@ import {
   STATUS_LABEL,
   formatBin,
 } from "@/data/cards";
-import {
-  calcCard,
-  effectiveFees,
-  feesVaryByLevel,
-  formatUsd,
-  pickLevel,
-  resolveLevels,
-} from "@/lib/calc";
+import { calcCard, effectiveFees, feesVaryByLevel, formatUsd, pickLevel, resolveLevels } from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
+import { cardMoney } from "@/lib/money";
+import { formatAssetAmount, SETTLEMENT_LABEL } from "@/lib/rates";
 import { postsForCard, usePosts } from "@/lib/posts";
-import { useDesk } from "@/lib/store";
+import { useCalcInput, useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/card/$slug")({ component: CardDetail });
@@ -35,10 +30,12 @@ export const Route = createFileRoute("/card/$slug")({ component: CardDetail });
 function CardDetail() {
   const { slug } = Route.useParams();
   const card = useCard(slug);
-  const spend = useDesk((s) => s.spend);
-  const bill = useDesk((s) => s.bill);
-  const tier = useDesk((s) => s.tier);
-  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
+  const input = useCalcInput();
+  const spend = input.spend;
+  const merchant = input.merchant;
+  const asset = input.asset;
+  const tier = input.tier;
+  const includePhysicalFee = input.includePhysicalFee;
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
   const [levelId, setLevelId] = useState<string | null>(null);
@@ -71,11 +68,12 @@ function CardDetail() {
   const result =
     card.status === "shutdown"
       ? null
-      : calcCard(card, { spend, bill, tier, includePhysicalFee, levelId: activeId });
+      : calcCard(card, { ...input, levelId: activeId });
   const wearVaries = feesVaryByLevel(card);
   const inCompare = selected.includes(card.slug);
   const cardSlug = card.slug;
   const cardUrl = card.url;
+  const money = cardMoney(card);
   const facts: Array<[string, string]> = [
     ["卡 BIN", formatBin(card)],
     ["卡组织", card.network ? card.network.toUpperCase() : "—"],
@@ -85,6 +83,9 @@ function CardDetail() {
     ["类型", CATEGORY_LABEL[card.category] ?? "—"],
     ["Apple Pay", card.applePay ? "支持" : "不支持"],
     ["Google Pay", card.googlePay ? "支持" : "不支持"],
+    ["结算币", SETTLEMENT_LABEL[money.settlement]],
+    ["扣款币", money.nativeAsset],
+    ["锚定", money.peg === "one-to-one" ? "官方 1:1" : "市价"],
     ["开卡费", `$${fees.openingFeeUsd}`],
     ["实体卡费", `$${card.physicalFeeUsd ?? 0}`],
     ["年费", `$${fees.annualFeeUsd}`],
@@ -145,8 +146,11 @@ function CardDetail() {
             {result && (
               <div className="mb-4 hidden lg:block">
                 <p className="text-[12px] text-subtle">
-                  ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} · {active.name}
+                  ${spend.toLocaleString()} · {merchant} · {asset} · {active.name}
                   {result.promoActive ? " · 活动消费费" : ""}
+                </p>
+                <p className="text-[12px] text-subtle">
+                  实扣 {formatAssetAmount(result.assetSpent, result.asset)} · {SETTLEMENT_LABEL[money.settlement]}
                 </p>
                 <div className="mt-1">
                   <NetFigure value={result.net} size="lg" />
@@ -176,8 +180,11 @@ function CardDetail() {
           <Group header="按当前口径">
             <div className="px-4 py-4">
               <p className="text-[12px] text-subtle lg:hidden">
-                ${spend.toLocaleString()} · {bill === "usd" ? "美元" : "本地货币"} · {active.name}
+                ${spend.toLocaleString()} · {merchant} · {asset} · {active.name}
                 {result.promoActive ? " · 活动消费费" : ""}
+              </p>
+              <p className="text-[12px] text-subtle lg:hidden">
+                实扣 {formatAssetAmount(result.assetSpent, result.asset)}
               </p>
               <div className="mt-1 lg:hidden">
                 <NetFigure value={result.net} size="lg" />
@@ -206,7 +213,7 @@ function CardDetail() {
                 <tbody>
                   {levels.map((l) => {
                     const f = effectiveFees(card, l);
-                    const r = calcCard(card, { spend, bill, tier, includePhysicalFee, levelId: l.id });
+                    const r = calcCard(card, { ...input, levelId: l.id });
                     const on = l.id === activeId;
                     return (
                       <tr
