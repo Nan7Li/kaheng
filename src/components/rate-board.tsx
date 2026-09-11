@@ -76,13 +76,11 @@ export function RateBoard() {
       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
         {FIATS.map((code) => {
           const units = unitsPerUsd(code, rates);
-          const digits = code === "JPY" || code === "KRW" ? 1 : 2;
+          const digits = code === "JPY" ? 1 : 2;
           return (
             <p key={code} className="flex items-baseline justify-between gap-2 text-[13px]">
               <span className="text-subtle">{FIAT_SHORT[code]}</span>
-              <span className="font-mono tabular-nums">
-                {units.toFixed(digits)}
-              </span>
+              <span className="font-mono tabular-nums">{units.toFixed(digits)}</span>
             </p>
           );
         })}
