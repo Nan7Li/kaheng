@@ -569,6 +569,30 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         />
         <Divider />
         <Field
+          label="退款费"
+          type="number"
+          suffix="%"
+          value={draft.refundFeePct ?? ""}
+          onChange={(v) => patch("refundFeePct", v === "" ? undefined : num(v))}
+        />
+        <Divider />
+        <Field
+          label="撤销费"
+          type="number"
+          suffix="$"
+          value={draft.reversalFeeUsd ?? ""}
+          onChange={(v) => patch("reversalFeeUsd", v === "" ? undefined : num(v))}
+        />
+        <Divider />
+        <Field
+          label="拒付费"
+          type="number"
+          suffix="$"
+          value={draft.chargebackFeeUsd ?? ""}
+          onChange={(v) => patch("chargebackFeeUsd", v === "" ? undefined : num(v))}
+        />
+        <Divider />
+        <Field
           label="币种转换"
           type="number"
           suffix="%"

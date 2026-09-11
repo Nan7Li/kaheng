@@ -92,6 +92,9 @@ BIN号: ${bin.binCode}
 年费: ${card.annualFeeUsd}
 月费: ${card.monthlyFeeUsd}
 充值费: ${card.topupFeePct}
+退款费: ${numOrEmpty(card.refundFeePct)}
+撤销费: ${numOrEmpty(card.reversalFeeUsd)}
+拒付费: ${numOrEmpty(card.chargebackFeeUsd)}
 币种转换费: ${card.cryptoConversionFeePct ?? 0}
 消费费: ${card.spendFeePct}
 活动消费费: ${numOrEmpty(card.promoSpendFeePct)}
@@ -310,6 +313,9 @@ export function parseCardSheet(text: string): UCard {
     annualFeeUsd: parseNum(g("年费")),
     monthlyFeeUsd: parseNum(g("月费")),
     topupFeePct: parseNum(g("充值费")),
+    refundFeePct: g("退款费") === "" ? undefined : parseNum(g("退款费")),
+    reversalFeeUsd: g("撤销费") === "" ? undefined : parseNum(g("撤销费")),
+    chargebackFeeUsd: g("拒付费") === "" ? undefined : parseNum(g("拒付费")),
     cryptoConversionFeePct: parseNum(g("币种转换费")),
     spendFeePct: parseNum(g("消费费")),
     promoSpendFeePct: g("活动消费费") === "" ? undefined : parseNum(g("活动消费费")),

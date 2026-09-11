@@ -87,6 +87,10 @@ export interface UCard {
   annualFeeUsd: number;
   monthlyFeeUsd: number;
   topupFeePct: number;
+  /** Optional issuer fees that are not part of the monthly spend calculator. */
+  refundFeePct?: number;
+  reversalFeeUsd?: number;
+  chargebackFeeUsd?: number;
   /** Stablecoin/crypto to card settlement currency conversion, separate from loading funds. */
   cryptoConversionFeePct?: number;
   spendFeePct: number;
@@ -1395,6 +1399,56 @@ export const CARDS: UCard[] = [
     pros: ["钱包一体"],
     cons: ["大陆停新", "净收益偏差"],
     updatedAt: "2026-09",
+  },
+  {
+    slug: "gate",
+    name: "Gate Card",
+    nameEn: "Gate Card",
+    issuer: "Gate / Sutton Bank",
+    network: "mastercard",
+    form: "virtual",
+    status: "active",
+    statusNote: "虚拟卡为主；开卡费官方当前标注限时免费。首充 10 USDT 免 0.9% 充值费，之后充值按 0.9% 计。Apple Pay / Google Pay 支持情况待补充。",
+    category: "exchange",
+    custody: "custodial",
+    kyc: "id",
+    kycNote: "大陆身份证申请路径目前相对友好，实际开放地区和审核以 Gate App 为准。",
+    regions: ["global", "cn"],
+    applePay: false,
+    googlePay: false,
+    tint: "sage",
+    binCountry: "us",
+    binIssuer: "Sutton Bank",
+    openingFeeUsd: 0,
+    physicalFeeUsd: 0,
+    annualFeeUsd: 0,
+    monthlyFeeUsd: 0,
+    topupFeePct: 0.9,
+    refundFeePct: 2,
+    reversalFeeUsd: 1,
+    chargebackFeeUsd: 35,
+    spendFeePct: 0,
+    fxFeePct: 1.5,
+    settlement: "USD",
+    nativeAsset: "USDT",
+    pegPolicy: "one-to-one",
+    pegRate: 1,
+    cashbackPct: 1,
+    cashbackPctHigh: 8,
+    cashbackAmountCapUsd: null,
+    cashbackAmountCapHighUsd: null,
+    cashbackSpendCapUsd: null,
+    cashbackNote: "基础返现 1%，随等级提高，官方宣传最高 8%；实际等级、适用商户和封顶以 App 条款为准。",
+    assets: ["USDT"],
+    scenes: ["daily", "ai", "offramp"],
+    risk: 3,
+    riskNote: "本条目混合使用官方费率口径与第三方 BIN 实测；Sutton Bank、费率和返现等级可能随地区、卡段或活动调整。",
+    summary: "USD 结算的 Gate 虚拟 Mastercard，首充优惠明显，但退款、撤销和拒付费用要单独留意。",
+    bestFor: "想用 USDT 支付、需要美元结算虚拟卡的人",
+    pros: ["USD 结算", "首充 10 USDT 免充值费", "月费和闲置费为 0", "大陆身份证路径相对友好"],
+    cons: ["非美元 FX 1.5%", "退款 2%", "撤销 $1、拒付 $35", "BIN 与返现信息仍需按实际卡段复核"],
+    verification: "secondary",
+    updatedAt: "2026-09-12",
   },
 ];
 

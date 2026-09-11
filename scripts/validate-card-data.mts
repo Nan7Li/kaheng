@@ -8,6 +8,9 @@ const numericFields = [
   "annualFeeUsd",
   "monthlyFeeUsd",
   "topupFeePct",
+  "refundFeePct",
+  "reversalFeeUsd",
+  "chargebackFeeUsd",
   "cryptoConversionFeePct",
   "spendFeePct",
   "promoSpendFeePct",
@@ -45,3 +48,4 @@ if (errors.length) {
 const official = CARDS.filter((card) => card.verification === "official").length;
 const partial = CARDS.filter((card) => card.verification === "partial").length;
 console.log(`Validated ${CARDS.length} cards (${official} officially verified, ${partial} partially verified).`);
+

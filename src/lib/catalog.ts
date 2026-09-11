@@ -3,7 +3,7 @@ import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 9;
+export const SEED_REVISION = 10;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -84,6 +84,14 @@ export function normalizeCard(raw: unknown): UCard | null {
     annualFeeUsd: asNum(c.annualFeeUsd),
     monthlyFeeUsd: asNum(c.monthlyFeeUsd),
     topupFeePct: asNum(c.topupFeePct),
+    refundFeePct:
+      typeof c.refundFeePct === "number" && Number.isFinite(c.refundFeePct) ? c.refundFeePct : undefined,
+    reversalFeeUsd:
+      typeof c.reversalFeeUsd === "number" && Number.isFinite(c.reversalFeeUsd) ? c.reversalFeeUsd : undefined,
+    chargebackFeeUsd:
+      typeof c.chargebackFeeUsd === "number" && Number.isFinite(c.chargebackFeeUsd)
+        ? c.chargebackFeeUsd
+        : undefined,
     cryptoConversionFeePct: asNum(c.cryptoConversionFeePct),
     spendFeePct: asNum(c.spendFeePct),
     fxFeePct: asNum(c.fxFeePct),
