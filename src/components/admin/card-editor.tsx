@@ -34,6 +34,7 @@ import {
 import { compressFace } from "@/lib/face";
 import { digitsOnly } from "@/lib/bin";
 import { useCatalog } from "@/lib/catalog";
+import { cardMoney } from "@/lib/money";
 
 const SCENES: Scene[] = ["ai", "daily", "apple", "ads", "offramp"];
 const REGIONS: Region[] = ["tw", "hk", "cn", "apac", "sg", "us", "eea", "global"];
@@ -52,11 +53,15 @@ function nullable(v: string): number | null {
 
 export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean }) {
   const seedBin = resolveBin(initial);
+  const seedMoney = cardMoney(initial);
   const [draft, setDraft] = useState<UCard>({
     ...initial,
     binCountry: seedBin.binCountry,
     binCode: seedBin.binCode ?? "",
     binIssuer: seedBin.binIssuer ?? "",
+    settlement: initial.settlement ?? seedMoney.settlement,
+    nativeAsset: initial.nativeAsset ?? seedMoney.nativeAsset,
+    pegPolicy: initial.pegPolicy ?? seedMoney.peg,
   });
   const [paste, setPaste] = useState("");
   const [binBusy, setBinBusy] = useState(false);
@@ -598,9 +603,49 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
           value={draft.fxFeePct}
           onChange={(v) => patch("fxFeePct", num(v))}
         />
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">结算币</p>
+          <Segmented<"USD" | "EUR" | "SGD" | "GBP">
+            value={draft.settlement ?? "USD"}
+            onChange={(v) => patch("settlement", v)}
+            options={[
+              { value: "USD", label: "USD" },
+              { value: "EUR", label: "EUR" },
+              { value: "SGD", label: "SGD" },
+              { value: "GBP", label: "GBP" },
+            ]}
+          />
+        </div>
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">扣款币</p>
+          <Segmented<"USDT" | "USDC" | "USDG" | "EURe">
+            value={draft.nativeAsset ?? "USDT"}
+            onChange={(v) => patch("nativeAsset", v)}
+            options={[
+              { value: "USDT", label: "USDT" },
+              { value: "USDC", label: "USDC" },
+              { value: "USDG", label: "USDG" },
+              { value: "EURe", label: "EURe" },
+            ]}
+          />
+        </div>
+        <Divider />
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-subtle">锚定</p>
+          <Segmented<"market" | "one-to-one">
+            value={draft.pegPolicy ?? "market"}
+            onChange={(v) => patch("pegPolicy", v)}
+            options={[
+              { value: "market", label: "市价" },
+              { value: "one-to-one", label: "官方 1:1" },
+            ]}
+          />
+        </div>
       </Group>
 
-      <Group header="返现" footer="封顶留空表示无上限。金额封顶是每月最多返多少美元。">
+      <Group header="返现" footer="封顶留空表示无上限。金额封顶按该卡结算币（美元卡是美元，欧元卡是欧元）。">
         <Field
           label="入门返现"
           type="number"
