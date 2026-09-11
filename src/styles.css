@@ -39,6 +39,10 @@
 }
 
 @layer base {
+  :root {
+    --app-sidebar: 15rem;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -286,3 +290,4 @@
     background: color-mix(in oklab, var(--color-accent) 6%, transparent);
   }
 }
+
