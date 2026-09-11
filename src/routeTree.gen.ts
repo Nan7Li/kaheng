@@ -20,6 +20,7 @@ import { Route as RisksRouteImport } from './routes/risks'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminSlugRouteImport } from './routes/admin.$slug'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
+import { Route as ApiRatesRouteImport } from './routes/api/rates'
 import { Route as CardSlugRouteImport } from './routes/card.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,11 @@ const AdminNewRoute = AdminNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiRatesRoute = ApiRatesRouteImport.update({
+  id: '/api/rates',
+  path: '/api/rates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CardSlugRoute = CardSlugRouteImport.update({
   id: '/card/$slug',
   path: '/card/$slug',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
+  '/api/rates': typeof ApiRatesRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
+  '/api/rates': typeof ApiRatesRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
+  '/api/rates': typeof ApiRatesRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
+    | '/api/rates'
     | '/card/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
+    | '/api/rates'
     | '/card/$slug'
     | '/admin'
   id:
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
+    | '/api/rates'
     | '/card/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   GuideRoute: typeof GuideRoute
   PostsRoute: typeof PostsRoute
   RisksRoute: typeof RisksRoute
+  ApiRatesRoute: typeof ApiRatesRoute
   CardSlugRoute: typeof CardSlugRoute
 }
 
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminNewRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/rates': {
+      id: '/api/rates'
+      path: '/api/rates'
+      fullPath: '/api/rates'
+      preLoaderRoute: typeof ApiRatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/card/$slug': {
       id: '/card/$slug'
       path: '/card/$slug'
@@ -293,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuideRoute: GuideRoute,
   PostsRoute: PostsRoute,
   RisksRoute: RisksRoute,
+  ApiRatesRoute: ApiRatesRoute,
   CardSlugRoute: CardSlugRoute,
 }
 export const routeTree = rootRouteImport
