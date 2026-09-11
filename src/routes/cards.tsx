@@ -17,7 +17,7 @@ import {
 } from "@/data/cards";
 import { calcCard, effectiveFees, matchesScene, pickLevel } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
-import { useDesk } from "@/lib/store";
+import { useCalcInput, useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/cards")({ component: CardsPage });
@@ -25,14 +25,13 @@ export const Route = createFileRoute("/cards")({ component: CardsPage });
 type SortKey = "net" | "cashback" | "fees" | "risk" | "open";
 
 function CardsPage() {
-  const spend = useDesk((s) => s.spend);
-  const bill = useDesk((s) => s.bill);
   const tier = useDesk((s) => s.tier);
-  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const scene = useDesk((s) => s.scene);
   const selected = useDesk((s) => s.selected);
   const toggleSelected = useDesk((s) => s.toggleSelected);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const all = useCatalog((s) => s.cards);
+  const input = useCalcInput();
 
   const [status, setStatus] = useState<"live" | "restricted" | "all" | "archive">("live");
   const [category, setCategory] = useState<Category | "all">("all");
@@ -44,10 +43,6 @@ function CardsPage() {
   const [sort, setSort] = useState<SortKey>("net");
   const [q, setQ] = useState("");
 
-  const input = useMemo(
-    () => ({ spend, bill, tier, includePhysicalFee }),
-    [spend, bill, tier, includePhysicalFee],
-  );
   const active = all.filter((c) => c.status !== "shutdown");
   const archive = all.filter((c) => c.status === "shutdown");
 
