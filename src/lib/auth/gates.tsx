@@ -63,14 +63,14 @@ export function SignInGate({
   return <>{fallback ?? <SignInButtons />}</>;
 }
 
-export function SignInButtons() {
+export function SignInButtons({ callbackURL = "/" }: { callbackURL?: string } = {}) {
   return (
     <div className="flex w-full max-w-sm flex-col gap-2">
       {GROK_PROVIDERS.map((p) => (
         <button
           key={p.providerId}
           type="button"
-          onClick={() => signIn(p.providerId, { callbackURL: "/" })}
+          onClick={() => signIn(p.providerId, { callbackURL })}
           className="w-full cursor-pointer rounded-md border border-neutral-300 px-4 py-2 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
         >
           Continue with {p.label}
@@ -130,3 +130,4 @@ export function UserButton() {
     </div>
   );
 }
+

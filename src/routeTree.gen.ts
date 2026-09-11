@@ -15,6 +15,7 @@ import { Route as BinRouteImport } from './routes/bin'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as RisksRouteImport } from './routes/risks'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -51,6 +52,11 @@ const CompareRoute = CompareRouteImport.update({
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsRoute = PostsRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
+    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
+    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
+    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   CardsRoute: typeof CardsRoute
   CompareRoute: typeof CompareRoute
   GuideRoute: typeof GuideRoute
+  LoginRoute: typeof LoginRoute
   PostsRoute: typeof PostsRoute
   RisksRoute: typeof RisksRoute
   ApiRatesRoute: typeof ApiRatesRoute
@@ -236,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/guide'
       fullPath: '/guide'
       preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/posts': {
@@ -311,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   CardsRoute: CardsRoute,
   CompareRoute: CompareRoute,
   GuideRoute: GuideRoute,
+  LoginRoute: LoginRoute,
   PostsRoute: PostsRoute,
   RisksRoute: RisksRoute,
   ApiRatesRoute: ApiRatesRoute,
@@ -328,3 +349,4 @@ declare module '@tanstack/react-start' {
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }
+
