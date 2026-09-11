@@ -2,7 +2,7 @@
 
 把在运营 U 卡的费率折成同一个数字：每消费 $1,000，你到底赚还是亏。
 
-对照、卡库、指南、本机管理（费率可改，存在浏览器里）。无账号、无邀请返佣。
+对照、卡库、指南、本机管理（费率可改，存在浏览器里）。公开页面无需登录；管理区只对绑定的管理员账户开放。无邀请返佣。
 
 线上版本：[card.stelloras.com](https://card.stelloras.com)
 
@@ -79,8 +79,18 @@ npm run dev
    - `CLOUDFLARE_API_TOKEN`（[创建 token](https://dash.cloudflare.com/profile/api-tokens)，权限包含 Account · Cloudflare Pages · Edit）
    - `CLOUDFLARE_ACCOUNT_ID`（Dashboard 右侧 Account ID）
 
-   之后每次推 `main` 会自动发布。
+之后每次推 `main` 会自动发布。
+
+### 管理区权限
+
+管理区 `/admin` 需要真实登录，并在 Pages 的生产环境变量中配置以下任一项：
+
+- `ADMIN_USER_ID`：登录会话的稳定用户 ID（优先推荐）
+- `ADMIN_EMAIL`：管理员登录邮箱（大小写不敏感）
+
+两项都未配置时，管理区会保持锁定，不会允许任何写入。不要把密码、OAuth token 或其他密钥写进代码；配置变更后重新部署即可生效。
 
 ## 说明
 
 费率按公开条款折算，管理页可以改成你的口径。U 卡会停服，只放亏得起的额度。
+
