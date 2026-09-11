@@ -70,6 +70,14 @@ export interface UCard {
   promoSpendFeePct?: number;
   promoUntil?: string;
   fxFeePct: number;
+  /** Card billing currency. EUR cards must not be treated as USD. */
+  settlement?: "USD" | "EUR" | "SGD" | "GBP";
+  /** Asset the card actually deducts. OKX is USDG. */
+  nativeAsset?: "USDT" | "USDC" | "USDG" | "EURe";
+  /** one-to-one: issuer treats 1 USDT = 1 USD (or 1 EURe = 1 EUR). market: live print. */
+  pegPolicy?: "market" | "one-to-one";
+  /** Merchant currencies that do not attract the card FX markup. */
+  fxFree?: string[];
   cashbackPct: number;
   cashbackPctHigh: number;
   cashbackAmountCapUsd: number | null;
@@ -124,6 +132,9 @@ export const CARDS: UCard[] = [
     promoSpendFeePct: 0,
     promoUntil: "2026-09-30",
     fxFeePct: 0,
+    pegPolicy: "one-to-one",
+    nativeAsset: "USDT",
+    settlement: "USD",
     cashbackPct: 4,
     cashbackPctHigh: 10,
     cashbackAmountCapUsd: 100,
@@ -287,6 +298,9 @@ export const CARDS: UCard[] = [
     cryptoConversionFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
+    settlement: "USD",
+    nativeAsset: "USDG",
+    pegPolicy: "market",
     cashbackPct: 2,
     cashbackPctHigh: 10,
     cashbackAmountCapUsd: 5,
@@ -337,9 +351,12 @@ export const CARDS: UCard[] = [
     annualFeeUsd: 0,
     monthlyFeeUsd: 0,
     topupFeePct: 0,
-    cryptoConversionFeePct: 0.1,
     spendFeePct: 0,
     fxFeePct: 0,
+    cryptoConversionFeePct: 0.1,
+    settlement: "EUR",
+    nativeAsset: "USDG",
+    pegPolicy: "market",
     cashbackPct: 2,
     cashbackPctHigh: 10,
     cashbackAmountCapUsd: 50,
@@ -394,6 +411,9 @@ export const CARDS: UCard[] = [
     cryptoConversionFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0.1,
+    settlement: "SGD",
+    nativeAsset: "USDG",
+    pegPolicy: "market",
     cashbackPct: 2,
     cashbackPctHigh: 10,
     cashbackAmountCapUsd: 50,
@@ -592,6 +612,7 @@ export const CARDS: UCard[] = [
     topupFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 1.7,
+    fxFree: ["USD", "SGD"],
     cashbackPct: 2,
     cashbackPctHigh: 3,
     cashbackAmountCapUsd: null,
@@ -781,6 +802,7 @@ export const CARDS: UCard[] = [
     topupFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
+    settlement: "EUR",
     cashbackPct: 0.5,
     cashbackPctHigh: 2,
     cashbackAmountCapUsd: null,
@@ -863,6 +885,9 @@ export const CARDS: UCard[] = [
     topupFeePct: 0,
     spendFeePct: 1,
     fxFeePct: 0,
+    settlement: "USD",
+    nativeAsset: "USDT",
+    pegPolicy: "one-to-one",
     cashbackPct: 1,
     cashbackPctHigh: 1,
     cashbackAmountCapUsd: null,
@@ -904,6 +929,9 @@ export const CARDS: UCard[] = [
     topupFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
+    settlement: "EUR",
+    nativeAsset: "EURe",
+    pegPolicy: "one-to-one",
     cashbackPct: 0,
     cashbackPctHigh: 5,
     cashbackAmountCapUsd: 0,
@@ -1284,6 +1312,7 @@ export const CARDS: UCard[] = [
     topupFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
+    settlement: "EUR",
     cashbackPct: 0,
     cashbackPctHigh: 2,
     cashbackAmountCapUsd: 0,
