@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { GitCompareArrows, Newspaper } from "lucide-react";
 import { Wordmark } from "@/components/logo";
+import { RateTicker } from "@/components/rate-board";
 import { TABS, navActive } from "@/components/tab-bar";
 import { DATA_AS_OF } from "@/data/cards";
 import { useDesk } from "@/lib/store";
@@ -70,6 +71,7 @@ export function SideNav() {
               </span>
             )}
           </Link>
+          <RateTicker className="px-1" />
           <p className="px-1 text-[11px] leading-relaxed text-subtle">
             卡衡 · {DATA_AS_OF}
             <br />

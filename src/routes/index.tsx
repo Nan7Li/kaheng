@@ -6,6 +6,7 @@ import { Desk, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { NetFigure } from "@/components/net-figure";
 import { PlasticCard } from "@/components/plastic-card";
 import { RankList } from "@/components/rank-list";
+import { RateBoard } from "@/components/rate-board";
 import { Button } from "@/components/ui/button";
 import { DATA_AS_OF } from "@/data/cards";
 import { METHOD_NOTES } from "@/data/events";
@@ -57,6 +58,9 @@ function Home() {
       <Desk
         rail={
           <Fade>
+            <div className="mb-4 lg:mb-5">
+              <RateBoard />
+            </div>
             <div className="ios-card mb-6 rounded-[28px] p-4 lg:mb-0">
               <DeskControls />
             </div>

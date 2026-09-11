@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { CompareBar } from "@/components/compare-bar";
 import { Wordmark } from "@/components/logo";
+import { RateTicker } from "@/components/rate-board";
 import { SideNav } from "@/components/side-nav";
 import { TabBar } from "@/components/tab-bar";
 import { DATA_AS_OF } from "@/data/cards";
@@ -18,6 +19,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
     useCatalog.getState().hydrate();
     usePosts.getState().hydrate();
     useDesk.getState().hydrateRates();
+    const t = setInterval(() => useDesk.getState().hydrateRates(), 5 * 60 * 1000);
+    return () => clearInterval(t);
   }, []);
 
   return (
@@ -38,6 +41,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
             >
               比较{selectedCount ? ` ${selectedCount}` : ""}
             </Link>
+          </div>
+          <div className="mx-auto mt-1.5 max-w-2xl px-2">
+            <RateTicker />
           </div>
         </header>
         <main className="flex-1">{children}</main>
