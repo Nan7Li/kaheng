@@ -6,6 +6,37 @@
 
 线上版本：[kaheng.cc](https://kaheng.cc)
 
+## 公开 API
+
+部署后可以把下面地址发给其他 AI，用来核对卡库数据。查询支持口语和常见错拼（例如 `plsama` → Plasma One）。
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| GET | `/api` | 索引、slug 列表 |
+| GET | `/api/cards` | 全部卡片（可加 `?status=active`） |
+| GET | `/api/cards/:slug` | 单卡完整记录 |
+| GET | `/api/lookup?q=` | 模糊搜索 |
+| GET / POST | `/api/ask?q=` | 给机器人和其他模型用的问答接口，返回 `text` + 结构化字段 |
+| POST | `/api/telegram` | Telegram webhook；预留给后续机器人 |
+| GET | `/api/openapi` | OpenAPI 描述 |
+| GET | `/llms.txt` | 给模型看的简短说明 |
+
+示例：
+
+```bash
+curl -sS "https://kaheng.cc/api/ask?q=plsama怎么样"
+curl -sS -X POST https://kaheng.cc/api/ask \
+  -H 'content-type: application/json' \
+  -d '{"q":"plasma怎么样","spend":1000,"bill":"usd","tier":"entry"}'
+```
+
+接 Telegram 机器人时，在 Cloudflare Pages 环境变量里加：
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_WEBHOOK_SECRET`（可选，对应 webhook secret token）
+
+然后把 webhook 设到 `https://kaheng.cc/api/telegram`。用户发「plasma怎么样」时，机器人会回该卡的全部公开信息。
+
 ## 数据可信度
 
 - 官方已核：列出官方帮助页及核验日期。
