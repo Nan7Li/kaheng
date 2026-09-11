@@ -17,7 +17,7 @@ type AskBody = {
   format?: "json" | "text";
 };
 
-async function readAsk(event: { req?: { method?: string } }): Promise<AskBody> {
+async function readAsk(event: unknown): Promise<AskBody> {
   const method = getMethod(event);
   const query = getQuery(event) as Record<string, string | undefined>;
   let body: AskBody = {};
