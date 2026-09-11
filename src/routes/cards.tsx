@@ -126,7 +126,7 @@ function CardsPage() {
                 className="mb-3 h-12 w-full rounded-[16px] bg-surface px-4 text-[16px] text-fg shadow-[var(--shadow-card)] outline-none placeholder:text-subtle"
               />
             </Fade>
-            <Group header="识别 BIN" footer="只填前 6–8 位。完整工具页在底部。" className="lg:mb-4">
+            <Group header="识别 BIN" footer="只填前 6–8 位。完整页在底部 BIN。" className="lg:mb-4">
               <BinLookup />
             </Group>
             <Fade>

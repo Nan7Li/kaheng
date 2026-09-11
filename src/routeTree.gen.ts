@@ -15,14 +15,12 @@ import { Route as BinRouteImport } from './routes/bin'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuideRouteImport } from './routes/guide'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as PostsRouteImport } from './routes/posts'
 import { Route as RisksRouteImport } from './routes/risks'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminSlugRouteImport } from './routes/admin.$slug'
 import { Route as AdminNewRouteImport } from './routes/admin.new'
 import { Route as CardSlugRouteImport } from './routes/card.$slug'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,11 +50,6 @@ const CompareRoute = CompareRouteImport.update({
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PostsRoute = PostsRouteImport.update({
@@ -89,11 +82,6 @@ const CardSlugRoute = CardSlugRouteImport.update({
   path: '/card/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,14 +90,12 @@ export interface FileRoutesByFullPath {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
-  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin/': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,14 +103,12 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
-  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,14 +118,12 @@ export interface FileRoutesById {
   '/cards': typeof CardsRoute
   '/compare': typeof CompareRoute
   '/guide': typeof GuideRoute
-  '/login': typeof LoginRoute
   '/posts': typeof PostsRoute
   '/risks': typeof RisksRoute
   '/admin/$slug': typeof AdminSlugRoute
   '/admin/new': typeof AdminNewRoute
   '/card/$slug': typeof CardSlugRoute
   '/admin/': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,14 +134,12 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
-    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
     | '/card/$slug'
     | '/admin/'
-    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,14 +147,12 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
-    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
     | '/card/$slug'
     | '/admin'
-    | '/api/auth/$'
   id:
     | '__root__'
     | '/'
@@ -183,14 +161,12 @@ export interface FileRouteTypes {
     | '/cards'
     | '/compare'
     | '/guide'
-    | '/login'
     | '/posts'
     | '/risks'
     | '/admin/$slug'
     | '/admin/new'
     | '/card/$slug'
     | '/admin/'
-    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,11 +176,9 @@ export interface RootRouteChildren {
   CardsRoute: typeof CardsRoute
   CompareRoute: typeof CompareRoute
   GuideRoute: typeof GuideRoute
-  LoginRoute: typeof LoginRoute
   PostsRoute: typeof PostsRoute
   RisksRoute: typeof RisksRoute
   CardSlugRoute: typeof CardSlugRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -251,13 +225,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/posts': {
       id: '/posts'
       path: '/posts'
@@ -300,13 +267,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CardSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -331,11 +291,9 @@ const rootRouteChildren: RootRouteChildren = {
   CardsRoute: CardsRoute,
   CompareRoute: CompareRoute,
   GuideRoute: GuideRoute,
-  LoginRoute: LoginRoute,
   PostsRoute: PostsRoute,
   RisksRoute: RisksRoute,
   CardSlugRoute: CardSlugRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

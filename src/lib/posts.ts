@@ -14,7 +14,9 @@ export interface XArticle {
   addedAt: string;
 }
 
-export const POST_SEED: XArticle[] = [
+const KEY = "kaheng-posts-v1";
+
+const SEED: XArticle[] = [
   {
     id: "2094272494211600583",
     url: "https://x.com/MEXCZH/status/2094272494211600583",
@@ -39,59 +41,72 @@ export const POST_SEED: XArticle[] = [
   },
 ];
 
-export function isArticle(raw: unknown): raw is XArticle {
+function readStored(): XArticle[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    const posts = parsed.filter(isArticle);
+    return posts.length ? posts : null;
+  } catch {
+    return null;
+  }
+}
+
+function isArticle(raw: unknown): raw is XArticle {
   if (!raw || typeof raw !== "object") return false;
   const p = raw as Partial<XArticle>;
   return typeof p.id === "string" && typeof p.url === "string" && typeof p.text === "string";
 }
 
+function writeStored(posts: XArticle[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(posts));
+  } catch {
+    /* quota */
+  }
+}
+
 interface PostsState {
   posts: XArticle[];
   hydrated: boolean;
-  hydrating: boolean;
-  hydrate: () => Promise<void>;
-  add: (post: FetchedXPost, extra?: { cardSlug?: string; note?: string }) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-  patch: (id: string, next: Partial<Pick<XArticle, "cardSlug" | "note">>) => Promise<void>;
+  hydrate: () => void;
+  add: (post: FetchedXPost, extra?: { cardSlug?: string; note?: string }) => void;
+  remove: (id: string) => void;
+  patch: (id: string, next: Partial<Pick<XArticle, "cardSlug" | "note">>) => void;
 }
 
 export const usePosts = create<PostsState>()((set, get) => ({
-  posts: POST_SEED,
+  posts: SEED,
   hydrated: false,
-  hydrating: false,
-  hydrate: async () => {
-    if (get().hydrated || get().hydrating) return;
-    set({ hydrating: true });
-    try {
-      const { listPosts } = await import("./posts.functions");
-      const posts = await listPosts();
-      set({ posts, hydrated: true, hydrating: false });
-    } catch {
-      set({ hydrated: true, hydrating: false });
-    }
+  hydrate: () => {
+    if (get().hydrated) return;
+    const stored = readStored();
+    set({ posts: stored ?? SEED, hydrated: true });
   },
-  add: async (post, extra) => {
-    const { savePost } = await import("./posts.functions");
+  add: (post, extra) => {
     const article: XArticle = {
       ...post,
       cardSlug: extra?.cardSlug || undefined,
       note: extra?.note || undefined,
       addedAt: new Date().toISOString().slice(0, 10),
     };
-    const saved = await savePost({ data: article });
-    set({ posts: [saved, ...get().posts.filter((p) => p.id !== saved.id)] });
+    const posts = [article, ...get().posts.filter((p) => p.id !== article.id)];
+    writeStored(posts);
+    set({ posts });
   },
-  remove: async (id) => {
-    const { removePost } = await import("./posts.functions");
-    await removePost({ data: id });
-    set({ posts: get().posts.filter((p) => p.id !== id) });
+  remove: (id) => {
+    const posts = get().posts.filter((p) => p.id !== id);
+    writeStored(posts);
+    set({ posts });
   },
-  patch: async (id, next) => {
-    const { savePost } = await import("./posts.functions");
-    const current = get().posts.find((p) => p.id === id);
-    if (!current) return;
-    const saved = await savePost({ data: { ...current, ...next } });
-    set({ posts: get().posts.map((p) => (p.id === id ? saved : p)) });
+  patch: (id, next) => {
+    const posts = get().posts.map((p) => (p.id === id ? { ...p, ...next } : p));
+    writeStored(posts);
+    set({ posts });
   },
 }));
 

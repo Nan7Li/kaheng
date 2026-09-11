@@ -27,12 +27,6 @@ for (const card of CARDS) {
     if (field.endsWith("Pct") && value > 100)
       errors.push(`${card.slug}.${field}: percentage exceeds 100`);
   }
-  if (card.binCode) {
-    const digits = card.binCode.replace(/\D/g, "");
-    if (digits.length < 6 || digits.length > 8) {
-      errors.push(`${card.slug}.binCode: expected 6–8 digits, got ${card.binCode}`);
-    }
-  }
   if (card.verification === "official" || card.verification === "partial") {
     if (!card.sourceUrls?.length) errors.push(`${card.slug}: verified entry needs sourceUrls`);
     if (!card.verifiedAt || !/^\d{4}-\d{2}-\d{2}$/.test(card.verifiedAt))

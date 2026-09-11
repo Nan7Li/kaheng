@@ -25,7 +25,6 @@ import {
   pickLevel,
   resolveLevels,
 } from "@/lib/calc";
-import { useAdminAccess } from "@/lib/admin-access";
 import { useCard } from "@/lib/catalog";
 import { postsForCard, usePosts } from "@/lib/posts";
 import { useDesk } from "@/lib/store";
@@ -45,10 +44,9 @@ function CardDetail() {
   const [levelId, setLevelId] = useState<string | null>(null);
   const posts = usePosts((s) => s.posts);
   const hydratePosts = usePosts((s) => s.hydrate);
-  const { isAdmin } = useAdminAccess();
 
   useEffect(() => {
-    void hydratePosts();
+    hydratePosts();
   }, [hydratePosts]);
 
   if (!card) {
@@ -111,13 +109,11 @@ function CardDetail() {
             <GitCompareArrows className="size-4" />
             {inCompare ? "已在比较" : "加入比较"}
           </Button>
-          {isAdmin && (
-            <Button asChild variant="secondary" size="icon" aria-label="编辑">
-              <Link to="/admin/$slug" params={{ slug: cardSlug }}>
-                <Pencil className="size-4" />
-              </Link>
-            </Button>
-          )}
+          <Button asChild variant="secondary" size="icon" aria-label="编辑">
+            <Link to="/admin/$slug" params={{ slug: cardSlug }}>
+              <Pencil className="size-4" />
+            </Link>
+          </Button>
           {cardUrl && (
             <Button asChild variant="secondary" size="icon" aria-label="官网">
               <a href={cardUrl} target="_blank" rel="noreferrer noopener">

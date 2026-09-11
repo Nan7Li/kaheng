@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
-/** Bump when built-in CARDS fees change so seed-owned DB rows rematch. */
-export const SEED_REVISION = 8;
-export const SEED_ACTOR = "seed";
+const KEY = "kaheng-catalog-v1";
+/** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
+export const SEED_REVISION = 6;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -99,59 +99,64 @@ export function normalizeCard(raw: unknown): UCard | null {
   };
 }
 
-export interface CatalogRow {
-  slug: string;
-  payload: unknown;
-  updated_by: string;
-}
-
-export function parseCatalogPayload(payload: unknown): UCard | null {
-  if (typeof payload === "string") {
-    try {
-      return normalizeCard(JSON.parse(payload));
-    } catch {
-      return null;
-    }
-  }
-  return normalizeCard(payload);
-}
-
-export function orderCatalog(cards: UCard[]): UCard[] {
-  const seedOrder = CARDS.map((c) => c.slug);
-  const seedSet = new Set(seedOrder);
-  const bySlug = new Map(cards.map((c) => [c.slug, c]));
-  const extras = cards.filter((c) => !seedSet.has(c.slug));
-  const seeded = seedOrder.map((slug) => bySlug.get(slug)).filter((c): c is UCard => Boolean(c));
-  return [...extras, ...seeded];
-}
-
-export function cardsFromRows(rows: CatalogRow[]): UCard[] {
-  const cards = rows
-    .map((row) => parseCatalogPayload(row.payload))
-    .filter((c): c is UCard => Boolean(c));
-  return orderCatalog(cards);
-}
-
-/** Seed rows refresh with built-in fees; admin-edited slugs stay put. */
-export function mergeCatalogRows(rows: CatalogRow[]): CatalogRow[] {
-  const bySlug = new Map(rows.map((row) => [row.slug, row]));
+function mergeSeed(stored: UCard[]): UCard[] {
+  const bySlug = new Map(stored.map((c) => [c.slug, c]));
   const seedSlugs = new Set(CARDS.map((c) => c.slug));
-  const next: CatalogRow[] = CARDS.map((seed) => {
+  const next = CARDS.map((seed) => {
     const old = bySlug.get(seed.slug);
-    if (!old || old.updated_by === SEED_ACTOR) {
-      return { slug: seed.slug, payload: seed, updated_by: SEED_ACTOR };
-    }
-    const card = parseCatalogPayload(old.payload);
+    if (!old) return { ...seed };
     return {
-      slug: seed.slug,
-      payload: card ?? seed,
-      updated_by: old.updated_by,
+      ...seed,
+      faceUrl: old.faceUrl || seed.faceUrl,
+      binCountry: old.binCountry ?? seed.binCountry,
+      binCode: old.binCode || seed.binCode,
+      binIssuer: old.binIssuer || seed.binIssuer,
+      inviteCode: old.inviteCode || seed.inviteCode,
+      inviteUrl: old.inviteUrl || seed.inviteUrl,
     };
   });
-  for (const row of rows) {
-    if (!seedSlugs.has(row.slug)) next.push(row);
+  return [...next, ...stored.filter((c) => !seedSlugs.has(c.slug))];
+}
+
+function readStored(): { cards: UCard[]; seedRevision: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    const cardsRaw = Array.isArray(parsed)
+      ? parsed
+      : parsed &&
+          typeof parsed === "object" &&
+          "state" in parsed &&
+          parsed.state &&
+          typeof parsed.state === "object" &&
+          "cards" in parsed.state
+        ? (parsed.state as { cards: unknown }).cards
+        : null;
+    if (!Array.isArray(cardsRaw)) return null;
+    const normalized = cardsRaw.map(normalizeCard).filter((c): c is UCard => Boolean(c));
+    if (!normalized.length) return null;
+    const seedRevision =
+      parsed && typeof parsed === "object" && "seedRevision" in parsed
+        ? Number((parsed as { seedRevision: unknown }).seedRevision) || 0
+        : 0;
+    return { cards: normalized, seedRevision };
+  } catch {
+    return null;
   }
-  return next;
+}
+
+function writeStored(cards: UCard[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ state: { cards }, version: 0, seedRevision: SEED_REVISION }),
+    );
+  } catch {
+    /* quota */
+  }
 }
 
 export function createBlankCard(): UCard {
@@ -204,59 +209,58 @@ export function createBlankCard(): UCard {
 interface CatalogState {
   cards: UCard[];
   hydrated: boolean;
-  hydrating: boolean;
-  upsert: (card: UCard) => Promise<UCard>;
-  remove: (slug: string) => Promise<void>;
-  reset: () => Promise<void>;
-  replaceAll: (cards: UCard[]) => Promise<void>;
-  hydrate: () => Promise<void>;
+  upsert: (card: UCard) => void;
+  remove: (slug: string) => void;
+  reset: () => void;
+  replaceAll: (cards: UCard[]) => void;
+  hydrate: () => void;
 }
 
 export const useCatalog = create<CatalogState>()((set, get) => ({
   cards: cloneCards(),
   hydrated: false,
-  hydrating: false,
-  upsert: async (card) => {
-    const { saveCatalogCard } = await import("./catalog.functions");
+  upsert: (card) => {
     const existing = get().cards.find((c) => c.slug === card.slug);
-    const saved = await saveCatalogCard({
-      data: {
-        ...card,
-        faceUrl: card.faceUrl || existing?.faceUrl,
-      },
-    });
+    const next = {
+      ...card,
+      faceUrl: card.faceUrl || existing?.faceUrl,
+      updatedAt: new Date().toISOString().slice(0, 7),
+    };
     const cards = get().cards;
-    const i = cards.findIndex((c) => c.slug === saved.slug);
-    const updated = i === -1 ? [saved, ...cards] : cards.map((c) => (c.slug === saved.slug ? saved : c));
+    const i = cards.findIndex((c) => c.slug === next.slug);
+    const updated = i === -1 ? [next, ...cards] : cards.map((c) => (c.slug === next.slug ? next : c));
+    writeStored(updated);
     set({ cards: updated });
-    return saved;
   },
-  remove: async (slug) => {
-    const { removeCatalogCard } = await import("./catalog.functions");
-    await removeCatalogCard({ data: slug });
-    set({ cards: get().cards.filter((c) => c.slug !== slug) });
+  remove: (slug) => {
+    const cards = get().cards.filter((c) => c.slug !== slug);
+    writeStored(cards);
+    set({ cards });
   },
-  reset: async () => {
-    const { resetCatalog } = await import("./catalog.functions");
-    const cards = await resetCatalog();
-    set({ cards: cards.length ? cards : cloneCards() });
+  reset: () => {
+    const cards = cloneCards();
+    writeStored(cards);
+    set({ cards });
   },
-  replaceAll: async (cards) => {
-    const { replaceCatalog } = await import("./catalog.functions");
+  replaceAll: (cards) => {
     const normalized = cards.map(normalizeCard).filter((c): c is UCard => Boolean(c));
-    const saved = await replaceCatalog({ data: normalized });
-    set({ cards: saved });
+    writeStored(normalized);
+    set({ cards: normalized });
   },
-  hydrate: async () => {
-    if (get().hydrated || get().hydrating) return;
-    set({ hydrating: true });
-    try {
-      const { listCatalog } = await import("./catalog.functions");
-      const cards = await listCatalog();
-      set({ cards: cards.length ? cards : cloneCards(), hydrated: true, hydrating: false });
-    } catch {
-      set({ hydrated: true, hydrating: false });
+  hydrate: () => {
+    if (get().hydrated) return;
+    const stored = readStored();
+    if (!stored) {
+      set({ hydrated: true });
+      return;
     }
+    if (stored.seedRevision < SEED_REVISION) {
+      const cards = mergeSeed(stored.cards);
+      writeStored(cards);
+      set({ cards, hydrated: true });
+      return;
+    }
+    set({ cards: stored.cards, hydrated: true });
   },
 }));
 

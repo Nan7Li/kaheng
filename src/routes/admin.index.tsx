@@ -7,8 +7,6 @@ import { Divider, Fade, Group, LargeTitle, Page } from "@/components/ios";
 import { CardThumb } from "@/components/plastic-card";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABEL, formatBin } from "@/data/cards";
-import { writeErrorMessage } from "@/lib/admin-access";
-import { UserButton } from "@/lib/auth/gates";
 import { parseImportPayload } from "@/lib/card-sheet";
 import { exportCatalog, useCatalog } from "@/lib/catalog";
 
@@ -21,44 +19,33 @@ function AdminPage() {
   const upsert = useCatalog((s) => s.upsert);
   const navigate = useNavigate();
   const [paste, setPaste] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  async function onReset() {
-    if (!confirm("恢复内置资料？公开卡库会回到内置版本，自定义卡也会没。")) return;
-    setBusy(true);
-    try {
-      await reset();
-      toast.success("已恢复内置资料");
-    } catch (err) {
-      toast.error(writeErrorMessage(err, "恢复失败"));
-    } finally {
-      setBusy(false);
-    }
+  function onReset() {
+    if (!confirm("恢复内置资料？你改过的内容会从这台设备上消失。自定义卡也会没。")) return;
+    reset();
+    toast.success("已恢复内置资料");
   }
 
-  async function applyText(text: string) {
-    setBusy(true);
+  function applyText(text: string) {
     try {
       const payload = parseImportPayload(text);
       if (payload.mode === "all") {
-        await replaceAll(payload.cards);
+        replaceAll(payload.cards);
         toast.success(`已导入 ${payload.cards.length} 张卡`);
         setPaste("");
         return;
       }
-      await upsert(payload.card);
+      upsert(payload.card);
       toast.success(`已写入「${payload.card.name}」`);
       setPaste("");
-    } catch (err) {
-      toast.error(writeErrorMessage(err, "文件格式不对。单卡用卡衡文本或 JSON 对象，整库用 JSON 数组。"));
-    } finally {
-      setBusy(false);
+    } catch {
+      toast.error("文件格式不对。单卡用卡衡文本或 JSON 对象，整库用 JSON 数组。");
     }
   }
 
   function onImport(file: File) {
     const reader = new FileReader();
-    reader.onload = () => void applyText(String(reader.result ?? ""));
+    reader.onload = () => applyText(String(reader.result ?? ""));
     reader.onerror = () => toast.error("文件读不出来");
     reader.readAsText(file);
   }
@@ -66,12 +53,11 @@ function AdminPage() {
   return (
     <Page>
       <LargeTitle
-        eyebrow="站长后台"
+        eyebrow="本机资料"
         trailing={
           <Button
             size="icon"
             aria-label="新增"
-            disabled={busy}
             onClick={() => void navigate({ to: "/admin/new" })}
           >
             <Plus className="size-5" />
@@ -82,7 +68,7 @@ function AdminPage() {
       </LargeTitle>
       <Fade>
         <p className="mb-5 max-w-xl text-[15px] leading-relaxed text-muted">
-          改费率、上下架、新增卡。保存后所有人立刻看到同一份卡库。只有管理员能进来。
+          改费率、上下架、新增卡。保存在这台设备的浏览器里，对照页会马上跟着变。
         </p>
       </Fade>
 
@@ -141,9 +127,8 @@ function AdminPage() {
                 <Divider />
                 <button
                   type="button"
-                  disabled={busy}
-                  onClick={() => void applyText(paste)}
-                  className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable disabled:opacity-60"
+                  onClick={() => applyText(paste)}
+                  className="flex min-h-12 w-full items-center px-4 text-[16px] text-accent pressable"
                 >
                   导入这段文本
                 </button>
@@ -165,11 +150,6 @@ function AdminPage() {
             </label>
           </Group>
 
-          <Group header="账号" footer="退出后别人进不了管理页。">
-            <div className="px-4 py-3">
-              <UserButton />
-            </div>
-          </Group>
           <Group header="整库">
             <button
               type="button"
@@ -181,9 +161,8 @@ function AdminPage() {
             <Divider />
             <button
               type="button"
-              disabled={busy}
-              onClick={() => void onReset()}
-              className="flex min-h-12 w-full items-center px-4 text-[16px] text-loss pressable disabled:opacity-60"
+              onClick={onReset}
+              className="flex min-h-12 w-full items-center px-4 text-[16px] text-loss pressable"
             >
               恢复内置资料
             </button>

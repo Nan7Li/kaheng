@@ -15,8 +15,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const selectedCount = useDesk((s) => s.selected.length);
 
   useEffect(() => {
-    void useCatalog.getState().hydrate();
-    void usePosts.getState().hydrate();
+    useCatalog.getState().hydrate();
+    usePosts.getState().hydrate();
   }, []);
 
   return (
@@ -43,7 +43,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <footer className="mx-auto w-full max-w-2xl px-6 pb-32 pt-4 text-[12px] leading-relaxed text-subtle lg:max-w-[88rem] lg:px-8 lg:pb-10 xl:px-10">
           <p className="lg:hidden">卡衡 · {DATA_AS_OF}</p>
           <p className="mt-1">
-            费率按公开条款折算。改卡库需管理员登录。本站无邀请返佣。U
+            费率按公开条款折算，可在管理页改成你的口径。本站无邀请返佣。U
             卡会停服，只放亏得起的额度。
           </p>
         </footer>

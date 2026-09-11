@@ -18,14 +18,6 @@ const databaseUrl =
  */
 export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
 
-/** Cloudflare Workers cannot run the PGLite WASM fallback. */
-function isCloudflareWorker(): boolean {
-  if (typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers") {
-    return true;
-  }
-  return typeof (globalThis as { WebSocketPair?: unknown }).WebSocketPair === "function";
-}
-
 /**
  * Minimal shared SQL surface, satisfied by both Neon and PGLite. Both the
  * tagged-template and `.query()` forms resolve to an array of row objects:
@@ -184,11 +176,7 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  if (dbSource === "neon") return createNeonSql();
-  if (isCloudflareWorker()) {
-    throw new Error("Cloudflare Pages has no DATABASE_URL; public pages use the built-in catalog.");
-  }
-  return createPgliteSql();
+  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
 }
 
 /**
@@ -233,7 +221,6 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  */
 export function ensureDbReady(): Promise<void> {
   if (dbSource !== "pglite") return Promise.resolve();
-  if (isCloudflareWorker()) return Promise.resolve();
   return getSql().then(() => undefined);
 }
 
@@ -242,7 +229,7 @@ export function ensureDbReady(): Promise<void> {
 const globalBoot = globalThis as typeof globalThis & {
   __pgBootstrapPromise__?: Promise<void>;
 };
-if (typeof window === "undefined" && dbSource === "pglite" && !isCloudflareWorker()) {
+if (typeof window === "undefined" && dbSource === "pglite") {
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
     console.error("[db] PGLite bootstrap failed:", err);

@@ -21,7 +21,7 @@ function AdminEdit() {
               <Link to="/admin">返回管理</Link>
             </Button>
           ) : (
-            <p className="text-[15px] text-muted">正在读取卡库…</p>
+            <p className="text-[15px] text-muted">正在读取本机资料…</p>
           )}
         </Fade>
       </Page>

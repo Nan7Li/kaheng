@@ -146,7 +146,7 @@ function Home() {
             </Link>
             <div className="ml-4 h-px bg-border" />
             <Link to="/bin" className="flex min-h-12 items-center justify-between px-4 pressable">
-              <span className="text-[16px]">卡粉工具</span>
+              <span className="text-[16px]">识别卡 BIN</span>
               <ArrowRight className="size-4 text-subtle" />
             </Link>
             <div className="ml-4 h-px bg-border" />
