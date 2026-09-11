@@ -1,11 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Compass, CreditCard, ScanSearch, Scale, SlidersHorizontal } from "lucide-react";
+import { Compass, CreditCard, Scale, SlidersHorizontal, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const TABS = [
   { to: "/", label: "对照", icon: Scale },
   { to: "/cards", label: "卡库", icon: CreditCard },
-  { to: "/bin", label: "BIN", icon: ScanSearch },
+  { to: "/bin", label: "工具", icon: Wrench },
   { to: "/guide", label: "指南", icon: Compass },
   { to: "/admin", label: "管理", icon: SlidersHorizontal },
 ] as const;

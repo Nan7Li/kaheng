@@ -63,7 +63,7 @@ export function PlasticCard({
     .slice(-4)
     .padStart(4, "0")
     .toUpperCase();
-  const bin = formatBin(card);
+  const bin = formatBin(card, false);
 
   return (
     <div

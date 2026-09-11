@@ -62,7 +62,7 @@ function NotFound() {
     <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col justify-center px-6">
       <p className="text-[13px] font-medium text-subtle">404</p>
       <h1 className="mt-2 text-3xl">这一页不在</h1>
-      <p className="mt-2 text-[15px] text-muted">对照、卡库、BIN、管理都还在底下。</p>
+      <p className="mt-2 text-[15px] text-muted">对照、卡库、工具、管理都还在底下。</p>
     </div>
   );
 }

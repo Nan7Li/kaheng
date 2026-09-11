@@ -73,7 +73,7 @@ export function SideNav() {
           <p className="px-1 text-[11px] leading-relaxed text-subtle">
             卡衡 · {DATA_AS_OF}
             <br />
-            费率可改，无返佣。
+            改卡库需管理员。无返佣。
           </p>
         </div>
       </div>

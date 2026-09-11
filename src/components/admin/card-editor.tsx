@@ -31,6 +31,7 @@ import {
   parseImportPayload,
   serializeCard,
 } from "@/lib/card-sheet";
+import { writeErrorMessage } from "@/lib/admin-access";
 import { compressFace } from "@/lib/face";
 import { digitsOnly } from "@/lib/bin";
 import { useCatalog } from "@/lib/catalog";
@@ -60,6 +61,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
   });
   const [paste, setPaste] = useState("");
   const [binBusy, setBinBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const upsert = useCatalog((s) => s.upsert);
   const remove = useCatalog((s) => s.remove);
   const navigate = useNavigate();
@@ -149,7 +151,7 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     }
   }
 
-  function save() {
+  async function save() {
     if (!draft.name.trim()) {
       toast.error("先写一个卡名");
       return;
@@ -163,20 +165,34 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     if (isNew && (!slug || slug === "new-card")) {
       slug = `custom-${Math.random().toString(36).slice(2, 7)}`;
     }
-    upsert({
-      ...draft,
-      slug: slug || draft.slug,
-      levels: draft.levels && draft.levels.length > 0 ? draft.levels : undefined,
-    });
-    toast.success("已保存到本机");
-    void navigate({ to: "/admin" });
+    setSaving(true);
+    try {
+      await upsert({
+        ...draft,
+        slug: slug || draft.slug,
+        levels: draft.levels && draft.levels.length > 0 ? draft.levels : undefined,
+      });
+      toast.success("已保存到公开卡库");
+      void navigate({ to: "/admin" });
+    } catch (err) {
+      toast.error(writeErrorMessage(err, "保存失败"));
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function onDelete() {
-    if (!confirm(`删除「${draft.name}」？此操作只影响你这台设备上的资料。`)) return;
-    remove(draft.slug);
-    toast.success("已删除");
-    void navigate({ to: "/admin" });
+  async function onDelete() {
+    if (!confirm(`删除「${draft.name}」？公开卡库会马上改，所有人都会看到。`)) return;
+    setSaving(true);
+    try {
+      await remove(draft.slug);
+      toast.success("已删除");
+      void navigate({ to: "/admin" });
+    } catch (err) {
+      toast.error(writeErrorMessage(err, "删除失败"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -892,11 +908,11 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
       </Group>
 
       <div className="flex flex-col gap-3">
-        <Button onClick={save} className="w-full">
-          {isNew ? "添加并保存" : "保存修改"}
+        <Button onClick={() => void save()} className="w-full" disabled={saving}>
+          {saving ? "保存中" : isNew ? "添加并保存" : "保存修改"}
         </Button>
         {!isNew && (
-          <Button variant="ghost" className="w-full text-loss" onClick={onDelete}>
+          <Button variant="ghost" className="w-full text-loss" disabled={saving} onClick={() => void onDelete()}>
             删除这张卡
           </Button>
         )}

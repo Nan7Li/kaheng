@@ -3,6 +3,8 @@
 
 CC BY 4.0 — attribute Techbuddie-Solutions/binlist-data
 (merged from iannuttall/binlist-data and venelinkochev/bin-list-data).
+
+Record format v2: {bin6}{scheme}{alpha2}{type}{level}{bankIdx}
 """
 
 from __future__ import annotations
@@ -28,6 +30,24 @@ SCHEME = {
     "UNIONPAY": "u",
     "CHINA UNIONPAY": "u",
     "DISCOVER": "u",
+}
+
+LEVEL = {
+    "CLASSIC": "c",
+    "STANDARD": "s",
+    "GOLD": "g",
+    "PLATINUM": "p",
+    "TITANIUM": "t",
+    "BUSINESS": "b",
+    "CORPORATE": "b",
+    "WORLD": "w",
+    "WORLD ELITE": "w",
+    "BLACK": "k",
+    "INFINITE": "i",
+    "SIGNATURE": "i",
+    "PREMIUM": "m",
+    "ENHANCED": "e",
+    "GIFT": "f",
 }
 
 
@@ -57,8 +77,46 @@ def type_of(raw: str) -> str:
     return "o"
 
 
-def completeness(issuer: str, alpha2: str, typ: str) -> int:
-    return int(bool(issuer)) * 4 + int(len(alpha2) == 2) * 2 + int(typ != "o")
+def level_of(raw: str) -> str:
+    t = raw.upper().strip()
+    if not t:
+        return "o"
+    if t in LEVEL:
+        return LEVEL[t]
+    if "PLATINUM" in t or "白金" in t:
+        return "p"
+    if "GOLD" in t:
+        return "g"
+    if "TITANIUM" in t:
+        return "t"
+    if "INFINITE" in t or "SIGNATURE" in t:
+        return "i"
+    if "WORLD" in t:
+        return "w"
+    if "BLACK" in t:
+        return "k"
+    if "BUSINESS" in t or "CORPORATE" in t:
+        return "b"
+    if "CLASSIC" in t:
+        return "c"
+    if "STANDARD" in t:
+        return "s"
+    if "PREMIUM" in t:
+        return "m"
+    if "ENHANCED" in t:
+        return "e"
+    if "GIFT" in t:
+        return "f"
+    return "o"
+
+
+def completeness(issuer: str, alpha2: str, typ: str, level: str) -> int:
+    return (
+        int(bool(issuer)) * 8
+        + int(len(alpha2) == 2) * 4
+        + int(typ != "o") * 2
+        + int(level != "o")
+    )
 
 
 def main() -> int:
@@ -86,18 +144,19 @@ def main() -> int:
             alpha2 = "??"
         s = scheme_of(row.get("brand") or "")
         t = type_of(row.get("type") or "")
+        lv = level_of(row.get("category") or "")
         if issuer not in banks:
             banks[issuer] = len(bank_list)
             bank_list.append(issuer)
-        rec = f"{bin6}{s}{alpha2}{t}{banks[issuer]}"
-        score = completeness(issuer, alpha2, t)
+        rec = f"{bin6}{s}{alpha2}{t}{lv}{banks[issuer]}"
+        score = completeness(issuer, alpha2, t, lv)
         prev = best.get(bin6)
         if prev is None or score >= prev[0]:
             best[bin6] = (score, rec)
 
     lines = [best[k][1] for k in sorted(best)]
     payload = {
-        "v": 1,
+        "v": 2,
         "src": "techbuddie-solutions/binlist-data",
         "n": len(lines),
         "b": bank_list,

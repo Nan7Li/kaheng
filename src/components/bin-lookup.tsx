@@ -1,24 +1,37 @@
 import { Link } from "@tanstack/react-router";
+import { Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Divider } from "@/components/ios";
+import { CardThumb } from "@/components/plastic-card";
 import type { BinCountry, Network, UCard } from "@/data/cards";
-import { BIN_COUNTRY_LABEL } from "@/data/cards";
 import {
+  countryDisplay,
   digitsOnly,
-  formatBinHit,
+  fetchHandyApi,
+  formatBinReport,
   hitFromKnown,
+  levelLabel,
   matchCatalog,
+  matchCatalogAll,
   matchKnownBin,
+  mergeBinHits,
+  needsLiveEnrichment,
   networkFromScheme,
   prefixHit,
+  prepaidLabel,
+  sceneHint,
+  schemeLabel,
   sourceLabel,
+  typeLabel,
   type BinHit,
 } from "@/lib/bin";
+import { lookupBin } from "@/lib/bin.functions";
 import { loadBinIndex, matchIndex } from "@/lib/bin-index";
 import { useCatalog } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
-const CACHE_KEY = "kaheng-bin-cache-v1";
+const CACHE_KEY = "kaheng-bin-cache-v5";
 
 function readCache(bin: string): BinHit | null {
   if (typeof window === "undefined") return null;
@@ -26,7 +39,7 @@ function readCache(bin: string): BinHit | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const map = JSON.parse(raw) as Record<string, BinHit>;
-    const hit = map[bin];
+    const hit = map[bin] ?? (bin.length > 6 ? map[bin.slice(0, 6)] : undefined);
     if (!hit || hit.source === "prefix") return null;
     return hit;
   } catch {
@@ -51,59 +64,91 @@ function writeCache(hit: BinHit) {
   }
 }
 
-function Tag({ children, accent }: { children: string; accent?: boolean }) {
-  return (
-    <span
-      className={cn(
-        "h-8 rounded-full px-3 text-[13px] font-medium leading-8",
-        accent ? "bg-accent text-accent-fg" : "bg-surface-2 text-muted",
-      )}
-    >
-      {children}
-    </span>
-  );
+function attachCard(hit: BinHit, bin: string, cards: UCard[]): BinHit {
+  const card = matchCatalog(bin, cards);
+  return {
+    ...hit,
+    cardSlug: hit.cardSlug ?? card?.slug,
+    cardName: card?.name ?? hit.cardName,
+  };
+}
+
+export async function identifyBinLocal(raw: string, cards: UCard[]): Promise<BinHit> {
+  const bin = digitsOnly(raw);
+  if (bin.length < 6) throw new Error("至少输入卡号前 6 位");
+  const known = matchKnownBin(bin);
+  if (known) {
+    let hit = attachCard(hitFromKnown(known, bin), bin, cards);
+    const local = await matchIndex(bin);
+    if (local) hit = attachCard(mergeBinHits(hit, local), bin, cards);
+    writeCache(hit);
+    return hit;
+  }
+  const cached = readCache(bin);
+  if (cached) return attachCard(cached, bin, cards);
+  const local = await matchIndex(bin);
+  if (local) return attachCard(local, bin, cards);
+  return attachCard(prefixHit(bin, "miss"), bin, cards);
+}
+
+export async function enrichBinLive(bin: string): Promise<BinHit | null> {
+  try {
+    const hit = await lookupBin({ data: { bin } });
+    if (hit?.source === "live") return hit;
+  } catch {
+    /* server cold / preview */
+  }
+  try {
+    const handy = await fetchHandyApi(bin);
+    if ("hit" in handy) return handy.hit;
+  } catch {
+    /* CORS or quota */
+  }
+  return null;
 }
 
 export async function identifyBin(raw: string, cards: UCard[]): Promise<BinHit> {
   const bin = digitsOnly(raw);
-  if (bin.length < 6) throw new Error("至少输入卡号前 6 位");
-  const attach = (hit: BinHit): BinHit => {
-    const card = matchCatalog(bin, cards);
-    return {
-      ...hit,
-      cardSlug: hit.cardSlug ?? card?.slug,
-      cardName: card?.name ?? hit.cardName,
-    };
-  };
-  const cached = readCache(bin);
-  if (cached) return attach(cached);
-  const known = matchKnownBin(bin);
-  if (known) {
-    const hit = attach(hitFromKnown(known, bin));
-    writeCache(hit);
-    return hit;
-  }
-  const local = await matchIndex(bin);
-  if (local) {
-    const hit = attach(local);
-    writeCache(hit);
-    return hit;
-  }
-  return attach(prefixHit(bin, "miss"));
+  const local = await identifyBinLocal(bin, cards);
+  if (!needsLiveEnrichment(local, bin)) return local;
+  const live = await enrichBinLive(bin);
+  if (!live) return local;
+  const merged = attachCard(mergeBinHits(local, live), bin, cards);
+  writeCache(merged);
+  return merged;
+}
+
+function Fact({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex min-h-11 items-center justify-between gap-3 px-4">
+      <span className="shrink-0 text-[15px] text-muted">{label}</span>
+      <span
+        className={cn(
+          "min-w-0 text-right text-[15px] text-fg",
+          mono && "font-mono tabular-nums tracking-wide",
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
 export function BinLookup({
   onApply,
   compact,
   auto,
+  seed,
 }: {
   onApply?: (hit: BinHit) => void;
   compact?: boolean;
   auto?: boolean;
+  seed?: string;
 }) {
   const cards = useCatalog((s) => s.cards);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(seed ?? "");
   const [busy, setBusy] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const [hit, setHit] = useState<BinHit | null>(null);
   const last = useRef("");
 
@@ -111,23 +156,47 @@ export function BinLookup({
     void loadBinIndex();
   }, []);
 
+  useEffect(() => {
+    if (!seed) return;
+    const bin = digitsOnly(seed);
+    if (bin.length < 6) return;
+    setValue(bin);
+    void run(bin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed]);
+
   async function run(raw = value) {
     const bin = digitsOnly(raw);
     if (bin.length < 6) {
       toast.error("至少输入卡号前 6 位");
       return;
     }
-    if (last.current === bin && hit && hit.source !== "prefix") return;
+    if (last.current === bin && hit && hit.source !== "prefix" && !needsLiveEnrichment(hit, bin)) {
+      return;
+    }
     setBusy(true);
+    setEnriching(false);
     try {
-      const next = await identifyBin(bin, cards);
+      const local = await identifyBinLocal(bin, cards);
       last.current = bin;
-      setHit(next);
-      onApply?.(next);
+      setHit(local);
+      onApply?.(local);
+      setBusy(false);
+      if (!needsLiveEnrichment(local, bin)) return;
+      setEnriching(true);
+      const live = await enrichBinLive(bin);
+      if (live) {
+        const merged = attachCard(mergeBinHits(local, live), bin, cards);
+        writeCache(merged);
+        last.current = bin;
+        setHit(merged);
+        onApply?.(merged);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "查不到这个 BIN");
     } finally {
       setBusy(false);
+      setEnriching(false);
     }
   }
 
@@ -141,6 +210,18 @@ export function BinLookup({
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto, value]);
+
+  const matched = hit ? matchCatalogAll(hit.bin, cards) : [];
+  const hint = hit ? hit.note || sceneHint(hit) : undefined;
+
+  function copyReport() {
+    if (!hit) return;
+    const text = formatBinReport(hit, cards);
+    void navigator.clipboard.writeText(text).then(
+      () => toast.success("已复制"),
+      () => toast.error("复制失败"),
+    );
+  }
 
   return (
     <div>
@@ -174,24 +255,57 @@ export function BinLookup({
         </button>
       </div>
       {hit && (
-        <div className={cn("pb-3", compact ? "px-0 pt-3" : "px-4")}>
-          <p className="text-[16px] font-medium">{formatBinHit(hit)}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Tag accent>{BIN_COUNTRY_LABEL[hit.country]}</Tag>
-            {hit.type && <Tag>{hit.type}</Tag>}
-            {hit.prepaid === true && <Tag>Prepaid</Tag>}
-            {hit.prepaid === false && <Tag>非预付</Tag>}
-            <Tag>{sourceLabel(hit.source)}</Tag>
-          </div>
-          {hit.cardSlug && (
-            <p className="mt-2 text-[13px] text-muted">
-              对上卡库里的{" "}
-              <Link to="/card/$slug" params={{ slug: hit.cardSlug }} className="font-medium text-accent">
-                {hit.cardName ?? hit.cardSlug}
-              </Link>
-            </p>
+        <div>
+          <Divider />
+          <Fact label="卡片 BIN" value={hit.bin} mono />
+          <Divider />
+          <Fact label="支付体系" value={schemeLabel(hit.scheme)} />
+          <Divider />
+          <Fact label="卡片类型" value={typeLabel(hit.type, hit.prepaid)} />
+          <Divider />
+          <Fact label="卡片等级" value={levelLabel(hit.level, hit.brand)} />
+          <Divider />
+          <Fact label="卡片币种" value={hit.currency || "未知"} />
+          <Divider />
+          <Fact label="发行国家" value={countryDisplay(hit)} />
+          <Divider />
+          <Fact label="银行名称" value={hit.bank || "未知"} />
+          <Divider />
+          <Fact label="是否预付卡" value={prepaidLabel(hit.prepaid)} />
+          <Divider />
+          <Fact label="来源" value={sourceLabel(hit.source)} />
+          {enriching && (
+            <p className="px-4 py-2 text-[12px] leading-relaxed text-subtle">正在对照公共库，补发卡行和等级…</p>
           )}
-          {hit.note && <p className="mt-1 text-[12px] leading-relaxed text-subtle">{hit.note}</p>}
+          {hint && (
+            <p className="px-4 py-2 text-[12px] leading-relaxed text-subtle">{hint}</p>
+          )}
+          {matched.length > 0 && (
+            <>
+              <Divider />
+              <p className="px-4 pt-2 text-[12px] text-subtle">卡库对上</p>
+              {matched.map((card) => (
+                <Link
+                  key={card.slug}
+                  to="/card/$slug"
+                  params={{ slug: card.slug }}
+                  className="flex min-h-12 items-center gap-3 px-4 py-2 pressable"
+                >
+                  <CardThumb card={card} className="size-8 shrink-0 rounded-[10px]" />
+                  <span className="min-w-0 flex-1 truncate text-[15px]">{card.name}</span>
+                </Link>
+              ))}
+            </>
+          )}
+          <Divider />
+          <button
+            type="button"
+            onClick={copyReport}
+            className="flex min-h-12 w-full items-center gap-2 px-4 text-[16px] text-accent pressable"
+          >
+            <Copy className="size-4" />
+            复制查询结果
+          </button>
         </div>
       )}
     </div>
@@ -203,7 +317,7 @@ export function applyHitToDraft(
   patch: (key: "binCountry" | "binCode" | "binIssuer" | "network", value: BinCountry | Network | string) => void,
 ) {
   patch("binCountry", hit.country);
-  patch("binCode", hit.bin.slice(0, 6));
+  patch("binCode", digitsOnly(hit.bin));
   if (hit.bank) patch("binIssuer", hit.bank);
   const network = networkFromScheme(hit.scheme);
   if (network) patch("network", network);

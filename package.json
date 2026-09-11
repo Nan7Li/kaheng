@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
-    "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
+    "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate && node scripts/copy-pglite-assets.mjs",
     "build:cf": "NITRO_PRESET=cloudflare-pages node scripts/with-app-env.mjs vite build",
     "db:migrate": "node scripts/migrate.mjs",
     "build:dev": "node scripts/with-app-env.mjs vite build --mode development",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
     "check:data": "node --experimental-strip-types scripts/validate-card-data.mts",
-    "test": "node --test scripts/browser-smoke-verdict.test.mjs scripts/migration-plan.test.mjs scripts/sign-out-plan.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/bin.test.ts src/lib/calc.test.ts src/lib/card-sheet.test.ts src/lib/x-post.test.ts",
+    "test": "node --test scripts/browser-smoke-verdict.test.mjs scripts/migration-plan.test.mjs scripts/sign-out-plan.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/bin.test.ts src/lib/calc.test.ts src/lib/card-sheet.test.ts src/lib/catalog.test.ts src/lib/x-post.test.ts src/lib/fx.test.ts src/lib/subs.test.ts src/lib/appstore.test.ts src/lib/tool-parse.test.ts",
     "test:template": "node --test 'scripts/**/*.test.mjs'",
     "bin:index": "python3 scripts/build-bin-index.py",
     "check": "npm run check:data && npm run typecheck && npm run lint && npm test && npm run build:cf",

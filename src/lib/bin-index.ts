@@ -1,7 +1,9 @@
 import {
   countryFromAlpha2,
+  currencyFromAlpha2,
   digitsOnly,
   schemeFromPrefix,
+  withBinMeta,
   type BinHit,
   type BinScheme,
 } from "./bin.ts";
@@ -36,6 +38,21 @@ const TYPE_CHAR: Record<string, string> = {
   p: "prepaid",
 };
 
+export const LEVEL_CHAR: Record<string, string> = {
+  c: "classic",
+  s: "standard",
+  g: "gold",
+  p: "platinum",
+  t: "titanium",
+  b: "business",
+  w: "world",
+  k: "black",
+  i: "infinite",
+  m: "premium",
+  e: "enhanced",
+  f: "gift",
+};
+
 let pending: Promise<LoadedBinIndex | null> | null = null;
 
 export function resetBinIndex() {
@@ -49,20 +66,24 @@ export function parseIndexRecord(line: string, banks: string[]): BinHit | null {
   const scheme = SCHEME_CHAR[line[6] ?? ""] ?? schemeFromPrefix(bin);
   const alpha2 = line.slice(7, 9);
   const type = TYPE_CHAR[line[9] ?? ""] ?? undefined;
-  const bankIdx = Number(line.slice(10));
+  const v2 = line.length > 10 && /[a-z]/.test(line[10] ?? "");
+  const level = v2 ? LEVEL_CHAR[line[10] ?? ""] : undefined;
+  const bankIdx = Number(line.slice(v2 ? 11 : 10));
   const bank = Number.isInteger(bankIdx) ? banks[bankIdx] : undefined;
   const country = alpha2 === "??" ? "unknown" : countryFromAlpha2(alpha2);
-  return {
+  return withBinMeta({
     bin,
     scheme,
     type,
+    level,
     prepaid: type === "prepaid" ? true : undefined,
     country,
     countryName: country === "unknown" ? "未收录" : BIN_COUNTRY_LABEL[country],
     countryAlpha2: alpha2 === "??" ? undefined : alpha2,
+    currency: alpha2 === "??" ? undefined : currencyFromAlpha2(alpha2),
     bank: bank || undefined,
     source: "index",
-  };
+  });
 }
 
 export function matchIndexLines(bin: string, lines: string[], banks: string[]): BinHit | undefined {
