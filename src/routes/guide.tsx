@@ -22,7 +22,7 @@ function scoreCard(card: UCard, a: Q1, b: Q2, c: Q3, d: Q4): number {
   const spend = b === "low" ? 300 : b === "mid" ? 1000 : 4000;
   const net = calcCard(card, {
     spend,
-    bill: a === "daily" ? "local" : "usd",
+    merchant: a === "daily" ? "TWD" : "USD",
     tier: d === "reward" ? "boost" : "entry",
   }).net;
   s += net / 8;
@@ -161,14 +161,14 @@ function GuidePage() {
       <Group header="三条经验" className="lg:hidden">
         <Rule n="01" title="入门档才是你的档" body="广告 10% 通常绑 VVIP、锁仓或月封顶。按最低持续返现算。" />
         <div className="ml-4 h-px bg-border" />
-        <Rule n="02" title="本地货币账单最伤" body="台币、港币消费会叠 FX。美元订阅用美元账单卡，日常另算。" />
+        <Rule n="02" title="账单货币要对上结算币" body="台币刷美元卡会叠 FX。欧元卡按欧元算。USDT 不是 1 美元。" />
         <div className="ml-4 h-px bg-border" />
         <Rule n="03" title="额度只放亏得起的" body="一年半停了十几家。订阅隔离，不要当主钱包。" />
       </Group>
 
       <div className="mb-6 hidden gap-4 lg:grid lg:grid-cols-3">
         <RuleCard n="01" title="入门档才是你的档" body="广告 10% 通常绑 VVIP、锁仓或月封顶。按最低持续返现算。" />
-        <RuleCard n="02" title="本地货币账单最伤" body="台币、港币消费会叠 FX。美元订阅用美元账单卡，日常另算。" />
+        <RuleCard n="02" title="账单货币要对上结算币" body="台币刷美元卡会叠 FX。欧元卡按欧元算。USDT 不是 1 美元。" />
         <RuleCard n="03" title="额度只放亏得起的" body="一年半停了十几家。订阅隔离，不要当主钱包。" />
       </div>
     </Page>
