@@ -71,7 +71,7 @@ function Home() {
           <Fade>
             <div className="mb-6 lg:ios-card lg:rounded-[28px] lg:p-5">
               <p className="mb-2 px-1 text-[13px] font-medium text-subtle lg:px-0">这一档第一</p>
-              <div className="lg:grid lg:grid-cols-[minmax(13rem,16.5rem)_minmax(0,1fr)] lg:items-center lg:gap-6 xl:grid-cols-[minmax(13rem,16.5rem)_minmax(0,1fr)_minmax(13rem,17rem)]">
+              <div className="lg:grid lg:grid-cols-[minmax(13rem,16.5rem)_minmax(0,1fr)] lg:items-center lg:gap-6 2xl:grid-cols-[minmax(13rem,16.5rem)_minmax(0,1fr)_minmax(13rem,17rem)]">
                 <Link to="/card/$slug" params={{ slug: leader.card.slug }} className="block">
                   <PlasticCard card={leader.card} />
                 </Link>
@@ -86,7 +86,7 @@ function Home() {
                     <NetFigure value={leader.result.net} size="lg" />
                   </div>
                 </div>
-                <div className="mt-4 hidden lg:col-span-2 lg:block xl:col-span-1 xl:mt-0">
+                <div className="mt-4 hidden lg:col-span-2 lg:block 2xl:col-span-1 2xl:mt-0">
                   <FeeStack result={leader.result} />
                 </div>
               </div>
@@ -182,3 +182,4 @@ function Stat({
     </div>
   );
 }
+
