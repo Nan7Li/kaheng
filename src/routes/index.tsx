@@ -11,18 +11,14 @@ import { DATA_AS_OF } from "@/data/cards";
 import { METHOD_NOTES } from "@/data/events";
 import { calcCard, formatUsd, matchesScene } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
-import { useDesk } from "@/lib/store";
+import { useCalcInput, useDesk } from "@/lib/store";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
-  const spend = useDesk((s) => s.spend);
-  const bill = useDesk((s) => s.bill);
-  const tier = useDesk((s) => s.tier);
-  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
   const scene = useDesk((s) => s.scene);
   const all = useCatalog((s) => s.cards);
-  const input = { spend, bill, tier, includePhysicalFee };
+  const input = useCalcInput();
 
   const live = all.filter((c) => c.status === "active");
   const officiallyVerified = live.filter((c) => c.verification === "official").length;
@@ -54,7 +50,7 @@ function Home() {
       </LargeTitle>
       <Fade>
         <p className="mb-5 max-w-xl text-[17px] leading-relaxed text-muted lg:mb-6">
-          每刷一千美金，你到底赚还是亏。只把带出处的官方条款当成可信基线；未核验条目只作线索。
+          每刷一千美金，按账单货币和支付币的实时价折算。1 USDT 不等于 1 美元；欧元卡按欧元结算。
         </p>
       </Fade>
 
