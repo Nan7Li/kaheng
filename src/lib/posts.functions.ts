@@ -62,7 +62,11 @@ async function seedPostsIfNeeded(): Promise<XArticle[]> {
 }
 
 export const listPosts = createServerFn({ method: "POST" }).handler(async (): Promise<XArticle[]> => {
-  return seedPostsIfNeeded();
+  try {
+    return await seedPostsIfNeeded();
+  } catch {
+    return POST_SEED.map((p) => ({ ...p }));
+  }
 });
 
 export const savePost = createServerFn({ method: "POST" })

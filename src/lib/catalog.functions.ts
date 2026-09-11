@@ -73,14 +73,18 @@ async function persistSeedMerge(existing: CatalogRow[]) {
 }
 
 export const listCatalog = createServerFn({ method: "POST" }).handler(async (): Promise<UCard[]> => {
-  const rows = await readRows();
-  const initialized = (await readMeta("catalog_initialized")) === "1";
-  const revision = Number((await readMeta("catalog_seed_revision")) ?? 0) || 0;
-  if (!initialized || rows.length === 0 || revision < SEED_REVISION) {
-    return persistSeedMerge(rows);
+  try {
+    const rows = await readRows();
+    const initialized = (await readMeta("catalog_initialized")) === "1";
+    const revision = Number((await readMeta("catalog_seed_revision")) ?? 0) || 0;
+    if (!initialized || rows.length === 0 || revision < SEED_REVISION) {
+      return persistSeedMerge(rows);
+    }
+    const cards = cardsFromRows(rows);
+    return cards.length ? cards : CARDS.map((c) => ({ ...c }));
+  } catch {
+    return CARDS.map((c) => ({ ...c }));
   }
-  const cards = cardsFromRows(rows);
-  return cards.length ? cards : CARDS.map((c) => ({ ...c }));
 });
 
 export const saveCatalogCard = createServerFn({ method: "POST" })
