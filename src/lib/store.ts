@@ -1,43 +1,56 @@
 import { create } from "zustand";
 import type { Scene } from "@/data/cards";
-import type { Bill, Tier } from "@/lib/calc";
+import type { Tier } from "@/lib/calc";
+import { FALLBACK_RATES, type AssetCode, type FiatCode, type RateTable } from "@/lib/rates";
 
 const MAX_COMPARE = 3;
 
 interface DeskState {
   spend: number;
-  bill: Bill;
+  merchant: FiatCode;
+  asset: AssetCode;
   tier: Tier;
   includePhysicalFee: boolean;
   scene: Scene | "all";
   selected: string[];
   saved: string[];
+  rates: RateTable;
+  ratesLive: boolean;
   setSpend: (n: number) => void;
-  setBill: (b: Bill) => void;
+  setMerchant: (c: FiatCode) => void;
+  setAsset: (a: AssetCode) => void;
   setTier: (t: Tier) => void;
   setIncludePhysicalFee: (v: boolean) => void;
   setScene: (s: Scene | "all") => void;
   toggleSelected: (slug: string) => void;
   clearSelected: () => void;
   toggleSaved: (slug: string) => void;
+  hydrateRates: () => void;
 }
 
 export const useDesk = create<DeskState>()((set, get) => ({
   spend: 1000,
-  bill: "usd",
+  merchant: "USD",
+  asset: "USDT",
   tier: "entry",
   includePhysicalFee: false,
   scene: "all",
   selected: [],
   saved: [],
+  rates: FALLBACK_RATES,
+  ratesLive: false,
   setSpend: (n) => {
     const spend = Math.min(20000, Math.max(50, Math.round(n)));
     if (get().spend === spend) return;
     set({ spend });
   },
-  setBill: (bill) => {
-    if (get().bill === bill) return;
-    set({ bill });
+  setMerchant: (merchant) => {
+    if (get().merchant === merchant) return;
+    set({ merchant });
+  },
+  setAsset: (asset) => {
+    if (get().asset === asset) return;
+    set({ asset });
   },
   setTier: (tier) => {
     if (get().tier === tier) return;
@@ -70,6 +83,28 @@ export const useDesk = create<DeskState>()((set, get) => ({
       saved: cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug],
     });
   },
+  hydrateRates: () => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/rates");
+        if (!res.ok) return;
+        const data = (await res.json()) as RateTable;
+        if (data?.usdPer?.USDT) set({ rates: data, ratesLive: data.source !== "fallback" });
+      } catch {
+        /* keep fallback */
+      }
+    })();
+  },
 }));
+
+export function useCalcInput() {
+  const spend = useDesk((s) => s.spend);
+  const merchant = useDesk((s) => s.merchant);
+  const asset = useDesk((s) => s.asset);
+  const tier = useDesk((s) => s.tier);
+  const includePhysicalFee = useDesk((s) => s.includePhysicalFee);
+  const rates = useDesk((s) => s.rates);
+  return { spend, merchant, asset, tier, includePhysicalFee, rates };
+}
 
 export { MAX_COMPARE };
