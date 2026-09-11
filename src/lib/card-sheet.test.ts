@@ -11,6 +11,9 @@ test("single-card text round-trips fee semantics and verification sources", () =
   assert.equal(parsed.verification, "official");
   assert.equal(parsed.verifiedAt, "2026-09-10");
   assert.deepEqual(parsed.sourceUrls, source.sourceUrls);
+  assert.equal(parsed.settlement, "EUR");
+  assert.equal(parsed.nativeAsset, "USDG");
+  assert.deepEqual(parsed.fxFree, ["EUR"]);
 });
 
 test("empty region field falls back to the safe global default", () => {

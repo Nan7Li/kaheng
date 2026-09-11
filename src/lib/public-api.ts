@@ -10,8 +10,10 @@ import {
   CARDS,
 } from "../data/cards.ts";
 import { calcCard, formatPct, formatUsd, type Bill, type Tier } from "./calc.ts";
+import { cardMoney } from "./money.ts";
+import { isAssetCode, isFiatCode, type AssetCode, type FiatCode } from "./rates.ts";
 
-export const API_VERSION = "1.0.0";
+export const API_VERSION = "1.1.0";
 export const SITE_URL = "https://card.stelloras.com";
 
 const ALIASES: Record<string, string> = {
@@ -36,10 +38,10 @@ const ALIASES: Record<string, string> = {
   "crypto.com": "cryptocom",
   cdc: "cryptocom",
   wildcard: "wildcard",
-  野卡: "wildcard",
+  "野卡": "wildcard",
   gnosispay: "gnosis",
   kucoin: "kucard",
-  kucoin卡: "kucard",
+  "kucoin卡": "kucard",
 };
 
 const NOISE =
@@ -144,6 +146,9 @@ export function cardToSummary(card: UCard) {
       promoSpendFeePct: card.promoSpendFeePct,
       promoUntil: card.promoUntil,
       fxFeePct: card.fxFeePct,
+      settlement: cardMoney(card).settlement,
+      nativeAsset: cardMoney(card).nativeAsset,
+      pegPolicy: cardMoney(card).peg,
     },
     cashback: {
       pct: card.cashbackPct,
@@ -169,12 +174,19 @@ export function cardToSummary(card: UCard) {
 
 export function formatCardText(
   card: UCard,
-  opts?: { spend?: number; bill?: Bill; tier?: Tier },
+  opts?: { spend?: number; bill?: Bill; merchant?: FiatCode; asset?: AssetCode; tier?: Tier },
 ): string {
   const spend = opts?.spend ?? 1000;
-  const bill = opts?.bill ?? "usd";
+  const merchant: FiatCode =
+    opts?.merchant && isFiatCode(opts.merchant)
+      ? opts.merchant
+      : opts?.bill === "local"
+        ? "TWD"
+        : "USD";
+  const asset: AssetCode = opts?.asset && isAssetCode(opts.asset) ? opts.asset : "USDT";
   const tier = opts?.tier ?? "entry";
-  const result = calcCard(card, { spend, bill, tier, includePhysicalFee: false });
+  const result = calcCard(card, { spend, merchant, asset, tier, includePhysicalFee: false });
+  const money = cardMoney(card);
   const lines = [
     `${card.name}（${card.nameEn}）`,
     `状态：${STATUS_LABEL[card.status]} · 核验：${card.verification ?? "unverified"} · 更新：${card.updatedAt}`,
@@ -183,6 +195,7 @@ export function formatCardText(
     card.statusNote ? `说明：${card.statusNote}` : "",
     `开卡 $${card.openingFeeUsd} · 年费 $${card.annualFeeUsd} · 月费 $${card.monthlyFeeUsd} · 实体卡 $${card.physicalFeeUsd}`,
     `充值 ${card.topupFeePct}% · 币种转换 ${card.cryptoConversionFeePct ?? 0}% · 消费 ${card.spendFeePct}% · FX ${card.fxFeePct}%`,
+    `结算 ${money.settlement} · 扣款 ${money.nativeAsset} · 锚定 ${money.peg === "one-to-one" ? "官方1:1" : "市价"}`,
     card.promoUntil
       ? `活动消费费 ${card.promoSpendFeePct ?? card.spendFeePct}%（至 ${card.promoUntil}）`
       : "",
@@ -193,7 +206,7 @@ export function formatCardText(
     `适合：${card.bestFor}`,
     card.pros.length ? `优点：${card.pros.join("；")}` : "",
     card.cons.length ? `缺点：${card.cons.join("；")}` : "",
-    `按月消费 $${spend}、${bill === "usd" ? "美元账单" : "本地货币账单"}、${tier === "boost" ? "进阶档" : "入门档"}估算：返现 ${formatUsd(result.cashback)}，费用 ${formatUsd(result.fees)}，净 ${formatUsd(result.net)}（${formatPct(result.netPct)}）`,
+    `按月消费 $${spend}、${merchant} 账单、${asset} 支付、${tier === "boost" ? "进阶档" : "入门档"}估算：返现 ${formatUsd(result.cashback)}，费用 ${formatUsd(result.fees)}，净 ${formatUsd(result.net)}（${formatPct(result.netPct)}）；实扣 ${result.assetSpent.toFixed(2)} ${result.asset}`,
     `详情：${SITE_URL}/card/${card.slug}`,
   ];
   return lines.filter(Boolean).join("\n");
@@ -212,6 +225,7 @@ export function apiMeta() {
       card: "/api/cards/:slug",
       lookup: "/api/lookup?q=",
       ask: "/api/ask?q=",
+      rates: "/api/rates",
       telegram: "POST /api/telegram",
       openapi: "/api/openapi",
     },

@@ -3,7 +3,7 @@ import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 6;
+export const SEED_REVISION = 8;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -87,6 +87,19 @@ export function normalizeCard(raw: unknown): UCard | null {
     cryptoConversionFeePct: asNum(c.cryptoConversionFeePct),
     spendFeePct: asNum(c.spendFeePct),
     fxFeePct: asNum(c.fxFeePct),
+    settlement:
+      c.settlement === "USD" || c.settlement === "EUR" || c.settlement === "SGD" || c.settlement === "GBP"
+        ? c.settlement
+        : undefined,
+    nativeAsset:
+      c.nativeAsset === "USDT" ||
+      c.nativeAsset === "USDC" ||
+      c.nativeAsset === "USDG" ||
+      c.nativeAsset === "EURe"
+        ? c.nativeAsset
+        : undefined,
+    pegPolicy: c.pegPolicy === "one-to-one" || c.pegPolicy === "market" ? c.pegPolicy : undefined,
+    fxFree: Array.isArray(c.fxFree) ? c.fxFree.filter((x): x is string => typeof x === "string") : undefined,
     cashbackPct: asNum(c.cashbackPct),
     cashbackPctHigh: asNum(c.cashbackPctHigh),
     sourceUrls: Array.isArray(c.sourceUrls)
@@ -186,6 +199,9 @@ export function createBlankCard(): UCard {
     cryptoConversionFeePct: 0,
     spendFeePct: 0,
     fxFeePct: 0,
+    settlement: "USD",
+    nativeAsset: "USDT",
+    pegPolicy: "market",
     cashbackPct: 0,
     cashbackPctHigh: 0,
     cashbackAmountCapUsd: null,
