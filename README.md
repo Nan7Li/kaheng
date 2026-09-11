@@ -4,7 +4,7 @@
 
 对照、卡库、指南、本机管理（费率可改，存在浏览器里）。无账号、无邀请返佣。
 
-线上版本：[kaheng.cc](https://kaheng.cc)
+线上版本：[card.stelloras.com](https://card.stelloras.com)
 
 ## 公开 API
 
@@ -24,8 +24,8 @@
 示例：
 
 ```bash
-curl -sS "https://kaheng.cc/api/ask?q=plsama怎么样"
-curl -sS -X POST https://kaheng.cc/api/ask \
+curl -sS "https://card.stelloras.com/api/ask?q=plsama怎么样"
+curl -sS -X POST https://card.stelloras.com/api/ask \
   -H 'content-type: application/json' \
   -d '{"q":"plasma怎么样","spend":1000,"bill":"usd","tier":"entry"}'
 ```
@@ -35,7 +35,7 @@ curl -sS -X POST https://kaheng.cc/api/ask \
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_WEBHOOK_SECRET`（可选，对应 webhook secret token）
 
-然后把 webhook 设到 `https://kaheng.cc/api/telegram`。用户发「plasma怎么样」时，机器人会回该卡的全部公开信息。
+然后把 webhook 设到 `https://card.stelloras.com/api/telegram`。用户发「plasma怎么样」时，机器人会回该卡的全部公开信息。
 
 ## 数据可信度
 

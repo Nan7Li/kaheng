@@ -2,19 +2,19 @@
 
 U 卡费率对照。把公开条款折成「每消费 $1,000 净赚还是亏」。
 
-网站：https://kaheng.cc
+网站：https://card.stelloras.com
 仓库：https://github.com/Nan7Li/kaheng
 数据截止日期见 /api 的 dataAsOf。
 
 ## 给其他模型用的接口
 
-- GET https://kaheng.cc/api
-- GET https://kaheng.cc/api/cards
-- GET https://kaheng.cc/api/cards/{slug}
-- GET https://kaheng.cc/api/lookup?q=plasma
-- GET https://kaheng.cc/api/ask?q=plasma怎么样
-- POST https://kaheng.cc/api/ask   JSON: {"q":"plsama怎么样"}
-- GET https://kaheng.cc/api/openapi
+- GET https://card.stelloras.com/api
+- GET https://card.stelloras.com/api/cards
+- GET https://card.stelloras.com/api/cards/{slug}
+- GET https://card.stelloras.com/api/lookup?q=plasma
+- GET https://card.stelloras.com/api/ask?q=plasma怎么样
+- POST https://card.stelloras.com/api/ask   JSON: {"q":"plsama怎么样"}
+- GET https://card.stelloras.com/api/openapi
 
 查询支持中文口语和常见错拼（例如 plsama → Plasma One）。回复里的 text 字段可直接给用户看。
 

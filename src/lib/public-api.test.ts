@@ -25,5 +25,5 @@ test("formatCardText includes key fields", () => {
   const text = formatCardText(card);
   assert.match(text, /Plasma One/);
   assert.match(text, /返现/);
-  assert.match(text, /kaheng\.cc\/card\/plasma/);
+  assert.match(text, /card\.stelloras\.com\/card\/plasma/);
 });

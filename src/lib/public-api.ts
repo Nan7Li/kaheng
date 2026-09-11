@@ -12,7 +12,7 @@ import {
 import { calcCard, formatPct, formatUsd, type Bill, type Tier } from "./calc.ts";
 
 export const API_VERSION = "1.0.0";
-export const SITE_URL = "https://kaheng.cc";
+export const SITE_URL = "https://card.stelloras.com";
 
 const ALIASES: Record<string, string> = {
   plsama: "plasma",
