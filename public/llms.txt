@@ -13,9 +13,11 @@ U 卡费率对照。把公开条款折成「每消费 $1,000 净赚还是亏」�
 - GET https://card.stelloras.com/api/cards/{slug}
 - GET https://card.stelloras.com/api/lookup?q=plasma
 - GET https://card.stelloras.com/api/ask?q=plasma怎么样
-- POST https://card.stelloras.com/api/ask   JSON: {"q":"plsama怎么样"}
+- POST https://card.stelloras.com/api/ask   JSON: {"q":"plsama怎么样","merchant":"TWD","asset":"USDT"}
+- GET https://card.stelloras.com/api/rates
 - GET https://card.stelloras.com/api/openapi
 
 查询支持中文口语和常见错拼（例如 plsama → Plasma One）。回复里的 text 字段可直接给用户看。
+估算按账单货币（USD/EUR/TWD/HKD/SGD/JPY/GBP/KRW/CNY/AUD）和支付币（USDT/USDC/USDG）的市价，不默认 1 稳定币 = 1 美元。欧元卡、新币卡按自己的结算币；OKX 扣 USDG。
 
 核对费率时请同时看 verification、verifiedAt、sourceUrls，不要把活动返现当成长期收益。

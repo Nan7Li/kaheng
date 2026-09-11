@@ -6,6 +6,7 @@ import {
   formatCardText,
   notFoundBody,
 } from "../../../src/lib/public-api.ts";
+import { isAssetCode, isFiatCode } from "../../../src/lib/rates.ts";
 import { corsPreflight, json, text } from "../../lib/api-http.ts";
 
 type AskBody = {
@@ -13,6 +14,8 @@ type AskBody = {
   text?: string;
   spend?: number;
   bill?: "usd" | "local";
+  merchant?: string;
+  asset?: string;
   tier?: "entry" | "boost";
   format?: "json" | "text";
 };
@@ -32,6 +35,8 @@ async function readAsk(event: unknown): Promise<AskBody> {
     q: body.q ?? body.text ?? query.q ?? query.text ?? "",
     spend: Number(body.spend ?? query.spend ?? 1000),
     bill: (body.bill ?? query.bill ?? "usd") as AskBody["bill"],
+    merchant: body.merchant ?? query.merchant,
+    asset: body.asset ?? query.asset,
     tier: (body.tier ?? query.tier ?? "entry") as AskBody["tier"],
     format: (body.format ?? query.format ?? "json") as AskBody["format"],
   };
@@ -70,6 +75,8 @@ export default defineEventHandler(async (event) => {
   const rendered = formatCardText(card, {
     spend: Number.isFinite(input.spend) ? input.spend : 1000,
     bill: input.bill === "local" ? "local" : "usd",
+    merchant: input.merchant && isFiatCode(input.merchant) ? input.merchant : undefined,
+    asset: input.asset && isAssetCode(input.asset) ? input.asset : undefined,
     tier: input.tier === "boost" ? "boost" : "entry",
   });
 

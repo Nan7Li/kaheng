@@ -27,7 +27,7 @@
 curl -sS "https://card.stelloras.com/api/ask?q=plsama怎么样"
 curl -sS -X POST https://card.stelloras.com/api/ask \
   -H 'content-type: application/json' \
-  -d '{"q":"plasma怎么样","spend":1000,"bill":"usd","tier":"entry"}'
+  -d '{"q":"plasma怎么样","spend":1000,"merchant":"TWD","asset":"USDT","tier":"entry"}'
 ```
 
 接 Telegram 机器人时，在 Cloudflare Pages 环境变量里加：
@@ -44,7 +44,7 @@ curl -sS -X POST https://card.stelloras.com/api/ask \
 - 未核验：只作检索线索，不应直接据此办卡。
 - 全球版、亚太版、新加坡版等若费用不同，会拆成独立条目。
 
-充值、币种转换、消费费与 FX 分开计算；实体卡费可选择是否摊入 12 个月成本。
+充值、币种转换、消费费与 FX 分开计算；USDT / USDC / USDG 按市价，不默认 1:1；欧元卡按欧元结算。实体卡费可选择是否摊入 12 个月成本。
 
 ## 本地运行
 

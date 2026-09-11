@@ -41,7 +41,10 @@ export default defineEventHandler((event) => {
             { name: "format", in: "query", schema: { enum: ["json", "text"] } },
           ],
         },
-        post: { summary: "Same as GET, accepts JSON { q, spend, bill, tier, format }" },
+        post: { summary: "Same as GET, accepts JSON { q, spend, merchant, asset, tier, format }" },
+      },
+      "/api/rates": {
+        get: { summary: "Live USDT / USDC / USDG and fiat quotes used by the calculator" },
       },
       "/api/telegram": {
         post: {
