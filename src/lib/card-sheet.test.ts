@@ -44,3 +44,11 @@ test("invite code and link round-trip through the text sheet", () => {
   assert.equal(again.inviteCode, "ABC123");
   assert.equal(again.inviteUrl, "https://example.com/r/ABC123");
 });
+
+test("issuer-specific peg rate round-trips through the text sheet", () => {
+  const source = CARDS.find((card) => card.slug === "mexc");
+  assert.ok(source);
+  const parsed = parseCardSheet(serializeCard(source));
+  assert.equal(parsed.pegRate, 1.102);
+});
+

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CUSTODY_LABEL, KYC_LABEL, STATUS_LABEL, formatBin, type UCard } from "@/data/cards";
 import { calcCard, effectiveFees, pickLevel, type Tier } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
-import { cardMoney } from "@/lib/money";
+import { cardMoney, pegLabel } from "@/lib/money";
 import { SETTLEMENT_LABEL } from "@/lib/rates";
 import { useCalcInput, useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,7 @@ const ROWS: Array<{ label: string; render: (c: UCard, tier: Tier) => string }> =
     label: "扣款币",
     render: (c) => cardMoney(c).nativeAsset,
   },
+  { label: "锚定", render: (c) => pegLabel(c) },
   {
     label: "消费费",
     render: (c, t) => `${effectiveFees(c, pickLevel(c, t)).spendFeePct}%`,
@@ -205,3 +206,4 @@ function ComparePage() {
     </Page>
   );
 }
+

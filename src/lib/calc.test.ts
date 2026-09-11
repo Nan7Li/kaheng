@@ -23,7 +23,7 @@ test("MEXC Global applies its dated fee promotion", () => {
   assert.equal(result.cashback, 40);
 });
 
-test("MEXC Global 1 USDT is not 1 USD — one-to-one debit still uses the live print", () => {
+test("MEXC Global uses its issuer-specific 1 USD = 1.102 USDT rate", () => {
   const result = calcCard(card("mexc"), {
     spend: 1000,
     merchant: "USD",
@@ -31,10 +31,11 @@ test("MEXC Global 1 USDT is not 1 USD — one-to-one debit still uses the live p
     tier: "entry",
     rates,
   });
-  assert.equal(result.assetSpent, 1000);
-  assert.ok(result.peg < -0.3 && result.peg > -0.5);
+  assert.equal(result.assetSpent, 1102);
+  assert.ok(result.peg > 101 && result.peg < 102);
   assert.equal(result.nativeAsset, "USDT");
   assert.equal(result.pegPolicy, "one-to-one");
+  assert.equal(result.pegRate, 1.102);
 });
 
 test("MEXC APAC separates conversion and local-currency FX", () => {
@@ -255,3 +256,4 @@ test("TWD bill on a USD card converts TWD to USDT, not only USD to USDT", () => 
   assert.equal(result.fx, 20);
   assert.ok(result.assetSpent > 1000);
 });
+

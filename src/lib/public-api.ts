@@ -10,7 +10,7 @@ import {
   CARDS,
 } from "../data/cards.ts";
 import { calcCard, formatPct, formatUsd, type Bill, type Tier } from "./calc.ts";
-import { cardMoney } from "./money.ts";
+import { cardMoney, pegLabel } from "./money.ts";
 import { isAssetCode, isFiatCode, type AssetCode, type FiatCode } from "./rates.ts";
 
 export const API_VERSION = "1.1.0";
@@ -149,6 +149,7 @@ export function cardToSummary(card: UCard) {
       settlement: cardMoney(card).settlement,
       nativeAsset: cardMoney(card).nativeAsset,
       pegPolicy: cardMoney(card).peg,
+      pegRate: cardMoney(card).pegRate,
     },
     cashback: {
       pct: card.cashbackPct,
@@ -195,7 +196,7 @@ export function formatCardText(
     card.statusNote ? `说明：${card.statusNote}` : "",
     `开卡 $${card.openingFeeUsd} · 年费 $${card.annualFeeUsd} · 月费 $${card.monthlyFeeUsd} · 实体卡 $${card.physicalFeeUsd}`,
     `充值 ${card.topupFeePct}% · 币种转换 ${card.cryptoConversionFeePct ?? 0}% · 消费 ${card.spendFeePct}% · FX ${card.fxFeePct}%`,
-    `结算 ${money.settlement} · 扣款 ${money.nativeAsset} · 锚定 ${money.peg === "one-to-one" ? "官方1:1" : "市价"}`,
+    `结算 ${money.settlement} · 扣款 ${money.nativeAsset} · 锚定 ${pegLabel(card)}`,
     card.promoUntil
       ? `活动消费费 ${card.promoSpendFeePct ?? card.spendFeePct}%（至 ${card.promoUntil}）`
       : "",
@@ -246,3 +247,4 @@ export function notFoundBody(query: string, suggestions: Array<{ slug: string; n
 export function catalogSuggestions(cards: UCard[] = CARDS) {
   return cards.map((c) => ({ slug: c.slug, name: c.name, nameEn: c.nameEn, status: c.status }));
 }
+

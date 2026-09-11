@@ -76,6 +76,8 @@ export interface UCard {
   nativeAsset?: "USDT" | "USDC" | "USDG" | "EURe";
   /** one-to-one: issuer treats 1 USDT = 1 USD (or 1 EURe = 1 EUR). market: live print. */
   pegPolicy?: "market" | "one-to-one";
+  /** Optional issuer rate: native-asset units charged for 1 settlement-currency unit. */
+  pegRate?: number;
   /** Merchant currencies that do not attract the card FX markup. */
   fxFree?: string[];
   cashbackPct: number;
@@ -133,6 +135,7 @@ export const CARDS: UCard[] = [
     promoUntil: "2026-09-30",
     fxFeePct: 0,
     pegPolicy: "one-to-one",
+    pegRate: 1.102,
     nativeAsset: "USDT",
     settlement: "USD",
     cashbackPct: 4,
@@ -1534,3 +1537,4 @@ export function faceSrc(card: Pick<UCard, "slug" | "faceUrl">): string | undefin
   if (card.slug && HAS_FACE.has(card.slug)) return `/faces/${card.slug}.jpg`;
   return undefined;
 }
+

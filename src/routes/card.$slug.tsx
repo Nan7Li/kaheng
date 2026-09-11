@@ -19,7 +19,7 @@ import {
 } from "@/data/cards";
 import { calcCard, effectiveFees, feesVaryByLevel, formatUsd, pickLevel, resolveLevels } from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
-import { cardMoney } from "@/lib/money";
+import { cardMoney, pegLabel } from "@/lib/money";
 import { formatAssetAmount, SETTLEMENT_LABEL } from "@/lib/rates";
 import { postsForCard, usePosts } from "@/lib/posts";
 import { useCalcInput, useDesk } from "@/lib/store";
@@ -85,7 +85,7 @@ function CardDetail() {
     ["Google Pay", card.googlePay ? "支持" : "不支持"],
     ["结算币", SETTLEMENT_LABEL[money.settlement]],
     ["扣款币", money.nativeAsset],
-    ["锚定", money.peg === "one-to-one" ? "官方 1:1" : "市价"],
+    ["锚定", pegLabel(card)],
     ["开卡费", `$${fees.openingFeeUsd}`],
     ["实体卡费", `$${card.physicalFeeUsd ?? 0}`],
     ["年费", `$${fees.annualFeeUsd}`],
@@ -379,3 +379,4 @@ function InviteRow({
     </div>
   );
 }
+

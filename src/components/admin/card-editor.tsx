@@ -524,7 +524,10 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
         </div>
       </Group>
 
-      <Group header="费用" footer="单位美元或百分比。开卡费会按 12 个月摊进每月净收益。">
+      <Group
+        header="费用"
+        footer="开卡费按 12 个月摊进每月净收益。卡内锚定率表示 1 单位结算币实际扣多少扣款币；留空按市价或官方 1:1。"
+      >
         <Field
           label="开卡费"
           type="number"
@@ -643,6 +646,18 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
             ]}
           />
         </div>
+        <Divider />
+        <Field
+          label={`1 ${draft.settlement ?? "USD"} =`}
+          type="number"
+          suffix={draft.nativeAsset ?? "USDT"}
+          value={draft.pegRate ?? ""}
+          onChange={(v) => {
+            const rate = Number(v);
+            patch("pegRate", v.trim() !== "" && Number.isFinite(rate) && rate > 0 ? rate : undefined);
+          }}
+          placeholder="留空按上方规则"
+        />
       </Group>
 
       <Group header="返现" footer="封顶留空表示无上限。金额封顶按该卡结算币（美元卡是美元，欧元卡是欧元）。">
@@ -950,3 +965,4 @@ export function CardEditor({ initial, isNew }: { initial: UCard; isNew?: boolean
     </div>
   );
 }
+

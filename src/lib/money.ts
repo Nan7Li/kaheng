@@ -5,6 +5,7 @@ export interface CardMoney {
   settlement: SettlementCode;
   nativeAsset: AssetCode;
   peg: PegPolicy;
+  pegRate?: number;
   fxFree: string[];
 }
 
@@ -51,10 +52,22 @@ export function cardMoney(card: UCard): CardMoney {
   const settlement = isSettlement(card.settlement) ? card.settlement : (o.settlement ?? "USD");
   const nativeAsset = isAsset(card.nativeAsset) ? card.nativeAsset : (o.nativeAsset ?? inferNative(card));
   const peg = isPeg(card.pegPolicy) ? card.pegPolicy : (o.peg ?? "market");
+  const pegRate =
+    typeof card.pegRate === "number" && Number.isFinite(card.pegRate) && card.pegRate > 0
+      ? card.pegRate
+      : undefined;
   const fxFree = Array.isArray(card.fxFree)
     ? card.fxFree
     : (o.fxFree ?? [settlement]);
-  return { settlement, nativeAsset, peg, fxFree };
+  return { settlement, nativeAsset, peg, pegRate, fxFree };
+}
+
+export function pegLabel(card: UCard): string {
+  const money = cardMoney(card);
+  if (money.pegRate !== undefined) {
+    return `1 ${money.settlement} = ${money.pegRate} ${money.nativeAsset}`;
+  }
+  return money.peg === "one-to-one" ? "官方 1:1" : "市价";
 }
 
 export function isPairedPeg(settlement: string, native: string): boolean {
@@ -64,3 +77,4 @@ export function isPairedPeg(settlement: string, native: string): boolean {
   if (settlement === "EUR" && native === "EURe") return true;
   return false;
 }
+

@@ -100,6 +100,7 @@ FX: ${card.fxFeePct}
 结算币: ${card.settlement ?? money.settlement}
 扣款币: ${card.nativeAsset ?? money.nativeAsset}
 锚定: ${card.pegPolicy ?? money.peg}
+卡内锚定率: ${numOrEmpty(card.pegRate)}
 免FX: ${list(card.fxFree ?? money.fxFree)}
 入门返现: ${card.cashbackPct}
 进阶返现: ${card.cashbackPctHigh}
@@ -325,6 +326,10 @@ export function parseCardSheet(text: string): UCard {
       : g("锚定") === "market" || g("锚定") === "市价"
         ? "market"
         : undefined),
+    pegRate: (() => {
+      const value = parseNum(g("卡内锚定率"), Number.NaN);
+      return Number.isFinite(value) && value > 0 ? value : undefined;
+    })(),
     fxFree: splitList(g("免FX")).length ? splitList(g("免FX")) : undefined,
     cashbackPct: parseNum(g("入门返现")),
     cashbackPctHigh: parseNum(g("进阶返现")),
@@ -394,3 +399,4 @@ export async function copySheet(card: UCard): Promise<void> {
   const text = serializeCard(card);
   await navigator.clipboard.writeText(text);
 }
+

@@ -3,7 +3,7 @@ import { CARDS, type CardLevel, type UCard } from "../data/cards.ts";
 
 const KEY = "kaheng-catalog-v1";
 /** Bump when built-in CARDS fees change so stale localStorage rematches seed slugs. */
-export const SEED_REVISION = 8;
+export const SEED_REVISION = 9;
 
 function cloneCards(): UCard[] {
   return JSON.parse(JSON.stringify(CARDS)) as UCard[];
@@ -99,6 +99,10 @@ export function normalizeCard(raw: unknown): UCard | null {
         ? c.nativeAsset
         : undefined,
     pegPolicy: c.pegPolicy === "one-to-one" || c.pegPolicy === "market" ? c.pegPolicy : undefined,
+    pegRate:
+      typeof c.pegRate === "number" && Number.isFinite(c.pegRate) && c.pegRate > 0
+        ? c.pegRate
+        : undefined,
     fxFree: Array.isArray(c.fxFree) ? c.fxFree.filter((x): x is string => typeof x === "string") : undefined,
     cashbackPct: asNum(c.cashbackPct),
     cashbackPctHigh: asNum(c.cashbackPctHigh),
@@ -202,6 +206,7 @@ export function createBlankCard(): UCard {
     settlement: "USD",
     nativeAsset: "USDT",
     pegPolicy: "market",
+    pegRate: undefined,
     cashbackPct: 0,
     cashbackPctHigh: 0,
     cashbackAmountCapUsd: null,
@@ -293,3 +298,4 @@ export function exportCatalog(cards: UCard[]) {
   a.click();
   URL.revokeObjectURL(url);
 }
+

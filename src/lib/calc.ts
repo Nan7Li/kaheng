@@ -62,6 +62,7 @@ export interface CalcResult {
   assetSpent: number;
   fxApplied: boolean;
   pegPolicy: "market" | "one-to-one";
+  pegRate?: number;
 }
 
 function n(v: unknown): number {
@@ -189,7 +190,12 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   const fxUsd = toUsd(fxSettle, settlement, rates);
 
   const oneToOne = money.peg === "one-to-one" && isPairedPeg(settlement, native);
-  const nativeForBill = oneToOne ? billedSettle : convert(billedSettle, settlement, native, rates);
+  const nativeForBill =
+    money.pegRate !== undefined
+      ? billedSettle * money.pegRate
+      : oneToOne
+        ? billedSettle
+        : convert(billedSettle, settlement, native, rates);
   const pegUsd = toUsd(nativeForBill, native, rates) - toUsd(billedSettle, settlement, rates);
 
   const conversionUsd = (goodsUsd * conversionPct) / 100;
@@ -247,6 +253,7 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
     assetSpent,
     fxApplied: fxApplies && fxPct > 0,
     pegPolicy: money.peg,
+    pegRate: money.pegRate,
   };
 }
 
@@ -291,3 +298,4 @@ export function formatPct(n: number, digits = 2): string {
 }
 
 export const SPEND_PRESETS = [200, 500, 1000, 2000, 5000, 10000] as const;
+
