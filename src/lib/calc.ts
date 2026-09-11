@@ -1,14 +1,28 @@
-import type { CardLevel, Scene, UCard } from "@/data/cards";
+import type { CardLevel, Scene, UCard } from "../data/cards.ts";
+import { cardMoney, isPairedPeg } from "./money.ts";
+import {
+  FALLBACK_RATES,
+  convert,
+  toUsd,
+  type AssetCode,
+  type FiatCode,
+  type RateTable,
+} from "./rates.ts";
 
 export type Tier = "entry" | "boost";
+/** @deprecated use merchant currency instead */
 export type Bill = "usd" | "local";
 
 export interface CalcInput {
   spend: number;
-  bill: Bill;
+  /** @deprecated usd → merchant USD; local → merchant TWD */
+  bill?: Bill;
+  merchant?: FiatCode;
+  asset?: AssetCode;
   tier: Tier;
   includePhysicalFee?: boolean;
   levelId?: string;
+  rates?: RateTable;
 }
 
 export interface EffectiveFees {
@@ -29,6 +43,8 @@ export interface CalcResult {
   conversion: number;
   spendFee: number;
   fx: number;
+  peg: number;
+  hop: number;
   amortized: number;
   fees: number;
   net: number;
@@ -38,6 +54,14 @@ export interface CalcResult {
   promoActive: boolean;
   levelId: string;
   levelName: string;
+  merchant: FiatCode;
+  asset: AssetCode;
+  settlement: string;
+  nativeAsset: string;
+  billedSettle: number;
+  assetSpent: number;
+  fxApplied: boolean;
+  pegPolicy: "market" | "one-to-one";
 }
 
 function n(v: unknown): number {
@@ -129,8 +153,24 @@ export function isPromoActive(card: UCard, now = new Date()): boolean {
   return Number.isFinite(t) && now.getTime() <= t;
 }
 
+export function resolveMerchant(input: CalcInput): FiatCode {
+  if (input.merchant) return input.merchant;
+  if (input.bill === "local") return "TWD";
+  return "USD";
+}
+
+export function resolveAsset(input: CalcInput): AssetCode {
+  return input.asset ?? "USDT";
+}
+
 export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcResult {
   const spend = Math.max(0, n(input.spend));
+  const rates = input.rates ?? FALLBACK_RATES;
+  const merchant = resolveMerchant(input);
+  const asset = resolveAsset(input);
+  const money = cardMoney(card);
+  const settlement = money.settlement;
+  const native = money.nativeAsset;
   const level = pickLevel(card, input.tier, input.levelId);
   const fees = effectiveFees(card, level);
   const promoActive = isPromoActive(card, now);
@@ -139,36 +179,57 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
     : fees.spendFeePct;
   const topupPct = fees.topupFeePct;
   const conversionPct = n(card.cryptoConversionFeePct);
-  const fxPct = input.bill === "local" ? fees.fxFeePct : 0;
+  const fxApplies = !money.fxFree.includes(merchant);
+  const fxPct = fxApplies ? fees.fxFeePct : 0;
+
+  const goodsUsd = spend;
+  const goodsSettle = convert(goodsUsd, "USD", settlement, rates);
+  const fxSettle = (goodsSettle * fxPct) / 100;
+  const billedSettle = goodsSettle + fxSettle;
+  const fxUsd = toUsd(fxSettle, settlement, rates);
+
+  const oneToOne = money.peg === "one-to-one" && isPairedPeg(settlement, native);
+  const nativeForBill = oneToOne ? billedSettle : convert(billedSettle, settlement, native, rates);
+  const pegUsd = toUsd(nativeForBill, native, rates) - toUsd(billedSettle, settlement, rates);
+
+  const conversionUsd = (goodsUsd * conversionPct) / 100;
+  const conversionNative = convert(conversionUsd, "USD", native, rates);
+  const nativeGross = nativeForBill + conversionNative;
+  const assetSpent = asset === native ? nativeGross : convert(nativeGross, native, asset, rates);
+  const hopUsd = toUsd(assetSpent, asset, rates) - toUsd(nativeGross, native, rates);
 
   const cashbackPctUsed = fees.cashbackPct;
   const amountCap = fees.cashbackAmountCapUsd;
   const spendCap = fees.cashbackSpendCapUsd;
+  const spendCapSettle = spendCap == null ? null : n(spendCap);
+  const eligibleSettle = spendCapSettle == null ? goodsSettle : Math.min(goodsSettle, spendCapSettle);
+  let cashbackSettle = (eligibleSettle * cashbackPctUsed) / 100;
+  if (amountCap != null) {
+    const capSettle = n(amountCap);
+    cashbackSettle = Math.min(cashbackSettle, capSettle);
+  }
+  const cashback = toUsd(cashbackSettle, settlement, rates);
 
-  const eligible = spendCap == null ? spend : Math.min(spend, n(spendCap));
-  let cashback = (eligible * cashbackPctUsed) / 100;
-  if (amountCap != null) cashback = Math.min(cashback, n(amountCap));
-
-  const topup = (spend * topupPct) / 100;
-  const conversion = (spend * conversionPct) / 100;
-  const spendFee = (spend * spendFeePctUsed) / 100;
-  const fx = (spend * fxPct) / 100;
+  const topup = (goodsUsd * topupPct) / 100;
+  const spendFee = (goodsUsd * spendFeePctUsed) / 100;
   const includePhysicalFee = input.includePhysicalFee || card.form === "physical";
   const amortized =
     fees.openingFeeUsd / 12 +
     (includePhysicalFee ? n(card.physicalFeeUsd) / 12 : 0) +
     fees.monthlyFeeUsd +
     fees.annualFeeUsd / 12;
-  const totalFees = topup + conversion + spendFee + fx + amortized;
+  const totalFees = topup + conversionUsd + spendFee + fxUsd + amortized + pegUsd + hopUsd;
   const net = cashback - totalFees;
-  const netPct = spend === 0 ? 0 : (net / spend) * 100;
+  const netPct = goodsUsd === 0 ? 0 : (net / goodsUsd) * 100;
 
   return {
     cashback,
     topup,
-    conversion,
+    conversion: conversionUsd,
     spendFee,
-    fx,
+    fx: fxUsd,
+    peg: pegUsd,
+    hop: hopUsd,
     amortized,
     fees: totalFees,
     net,
@@ -178,6 +239,14 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
     promoActive,
     levelId: level.id,
     levelName: level.name,
+    merchant,
+    asset,
+    settlement,
+    nativeAsset: native,
+    billedSettle,
+    assetSpent,
+    fxApplied: fxApplies && fxPct > 0,
+    pegPolicy: money.peg,
   };
 }
 
