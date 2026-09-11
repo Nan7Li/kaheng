@@ -8,14 +8,17 @@ import { Button } from "@/components/ui/button";
 import { CUSTODY_LABEL, KYC_LABEL, STATUS_LABEL, formatBin, type UCard } from "@/data/cards";
 import { calcCard, effectiveFees, pickLevel, type Tier } from "@/lib/calc";
 import { useCatalog } from "@/lib/catalog";
-import { cardMoney, pegLabel } from "@/lib/money";
+import { cardCnyLabel, cardMoney, pegLabel } from "@/lib/money";
 import { SETTLEMENT_LABEL } from "@/lib/rates";
 import { useCalcInput, useDesk } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/compare")({ component: ComparePage });
 
-const ROWS: Array<{ label: string; render: (c: UCard, tier: Tier) => string }> = [
+const ROWS: Array<{
+  label: string;
+  render: (c: UCard, tier: Tier, rates: Parameters<typeof cardCnyLabel>[1]) => string;
+}> = [
   { label: "发行方", render: (c) => c.issuer || "—" },
   { label: "卡 BIN", render: (c) => formatBin(c) },
   { label: "网络", render: (c) => (c.network ? c.network.toUpperCase() : "—") },
@@ -55,6 +58,7 @@ const ROWS: Array<{ label: string; render: (c: UCard, tier: Tier) => string }> =
     render: (c) => cardMoney(c).nativeAsset,
   },
   { label: "锚定", render: (c) => pegLabel(c) },
+  { label: "人民币换算", render: (c, _tier, rates) => cardCnyLabel(c, rates) },
   {
     label: "消费费",
     render: (c, t) => `${effectiveFees(c, pickLevel(c, t)).spendFeePct}%`,
@@ -165,7 +169,7 @@ function ComparePage() {
                 >
                   {picked.map((c) => (
                     <p key={c.slug} className="truncate text-[15px] font-medium">
-                      {row.render(c, tier)}
+                      {row.render(c, tier, input.rates)}
                     </p>
                   ))}
                 </div>
@@ -194,7 +198,7 @@ function ComparePage() {
                     <th>{row.label}</th>
                     {picked.map((c) => (
                       <td key={c.slug} className="text-[15px] font-medium">
-                        {row.render(c, tier)}
+                        {row.render(c, tier, input.rates)}
                       </td>
                     ))}
                   </tr>

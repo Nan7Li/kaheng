@@ -1,5 +1,5 @@
 import type { UCard } from "../data/cards.ts";
-import type { AssetCode, PegPolicy, SettlementCode } from "./rates.ts";
+import { convert, type AssetCode, type PegPolicy, type RateTable, type SettlementCode } from "./rates.ts";
 
 export interface CardMoney {
   settlement: SettlementCode;
@@ -68,6 +68,29 @@ export function pegLabel(card: UCard): string {
     return `1 ${money.settlement} = ${money.pegRate} ${money.nativeAsset}`;
   }
   return money.peg === "one-to-one" ? "官方 1:1" : "市价";
+}
+
+export function cardCnyRate(card: UCard, rates: RateTable): { amount: number; basis: string } {
+  const money = cardMoney(card);
+  if (money.pegRate !== undefined) {
+    return {
+      amount: convert(1, money.settlement, "CNY", rates) / money.pegRate,
+      basis: "卡内锚定",
+    };
+  }
+  if (money.peg === "one-to-one" && isPairedPeg(money.settlement, money.nativeAsset)) {
+    return {
+      amount: convert(1, money.settlement, "CNY", rates),
+      basis: "官方 1:1",
+    };
+  }
+  return { amount: convert(1, money.nativeAsset, "CNY", rates), basis: "实时市价" };
+}
+
+export function cardCnyLabel(card: UCard, rates: RateTable): string {
+  const money = cardMoney(card);
+  const rate = cardCnyRate(card, rates);
+  return `1 ${money.nativeAsset} ≈ ¥${rate.amount.toFixed(2)}（${rate.basis}）`;
 }
 
 export function isPairedPeg(settlement: string, native: string): boolean {

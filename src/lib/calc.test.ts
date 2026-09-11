@@ -3,7 +3,7 @@ import test from "node:test";
 import { CARDS } from "../data/cards.ts";
 import { calcCard } from "./calc.ts";
 import { FALLBACK_RATES, convert } from "./rates.ts";
-import { cardMoney } from "./money.ts";
+import { cardCnyRate, cardMoney } from "./money.ts";
 
 function card(slug: string) {
   const found = CARDS.find((item) => item.slug === slug);
@@ -36,6 +36,9 @@ test("MEXC Global uses its issuer-specific 1 USD = 1.102 USDT rate", () => {
   assert.equal(result.nativeAsset, "USDT");
   assert.equal(result.pegPolicy, "one-to-one");
   assert.equal(result.pegRate, 1.102);
+  const cny = cardCnyRate(card("mexc"), rates);
+  assert.equal(cny.basis, "卡内锚定");
+  assert.ok(cny.amount > 6.1 && cny.amount < 6.11);
 });
 
 test("MEXC APAC separates conversion and local-currency FX", () => {

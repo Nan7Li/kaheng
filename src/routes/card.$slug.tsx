@@ -19,7 +19,7 @@ import {
 } from "@/data/cards";
 import { calcCard, effectiveFees, feesVaryByLevel, formatUsd, pickLevel, resolveLevels } from "@/lib/calc";
 import { useCard } from "@/lib/catalog";
-import { cardMoney, pegLabel } from "@/lib/money";
+import { cardCnyLabel, cardMoney, pegLabel } from "@/lib/money";
 import { formatAssetAmount, SETTLEMENT_LABEL } from "@/lib/rates";
 import { postsForCard, usePosts } from "@/lib/posts";
 import { useCalcInput, useDesk } from "@/lib/store";
@@ -86,6 +86,7 @@ function CardDetail() {
     ["结算币", SETTLEMENT_LABEL[money.settlement]],
     ["扣款币", money.nativeAsset],
     ["锚定", pegLabel(card)],
+    ["人民币换算", cardCnyLabel(card, input.rates)],
     ["开卡费", `$${fees.openingFeeUsd}`],
     ["实体卡费", `$${card.physicalFeeUsd ?? 0}`],
     ["年费", `$${fees.annualFeeUsd}`],
