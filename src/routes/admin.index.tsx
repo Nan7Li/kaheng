@@ -19,11 +19,25 @@ function AdminPage() {
   const upsert = useCatalog((s) => s.upsert);
   const navigate = useNavigate();
   const [paste, setPaste] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function onReset() {
     if (!confirm("恢复内置资料？你改过的内容会从这台设备上消失。自定义卡也会没。")) return;
     reset();
     toast.success("已恢复内置资料");
+  }
+
+  async function onLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const response = await fetch("/api/admin/logout", { method: "POST" });
+      if (!response.ok) throw new Error("logout_failed");
+      await navigate({ to: "/login" });
+    } catch {
+      setLoggingOut(false);
+      toast.error("退出失败，请稍后重试");
+    }
   }
 
   function applyText(text: string) {
@@ -55,13 +69,23 @@ function AdminPage() {
       <LargeTitle
         eyebrow="本机资料"
         trailing={
-          <Button
-            size="icon"
-            aria-label="新增"
-            onClick={() => void navigate({ to: "/admin/new" })}
-          >
-            <Plus className="size-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={loggingOut}
+              onClick={() => void onLogout()}
+              className="rounded-full px-3 py-2 text-[13px] text-subtle pressable disabled:cursor-wait disabled:opacity-60"
+            >
+              {loggingOut ? "退出中…" : "退出"}
+            </button>
+            <Button
+              size="icon"
+              aria-label="新增"
+              onClick={() => void navigate({ to: "/admin/new" })}
+            >
+              <Plus className="size-5" />
+            </Button>
+          </div>
         }
       >
         管理
