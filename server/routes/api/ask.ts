@@ -1,12 +1,13 @@
 import { CARDS } from "../../../src/data/cards.ts";
 import {
+  calcCardForApi,
   cardToSummary,
   catalogSuggestions,
   findCards,
   formatCardText,
   notFoundBody,
 } from "../../../src/lib/public-api.ts";
-import { isAssetCode, isFiatCode } from "../../../src/lib/rates.ts";
+import { getRates, isAssetCode, isFiatCode } from "../../../src/lib/rates.ts";
 import { corsPreflight, json, text } from "../../lib/api-http.ts";
 
 type AskBody = {
@@ -72,13 +73,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const card = hits[0]!;
-  const rendered = formatCardText(card, {
-    spend: Number.isFinite(input.spend) ? input.spend : 1000,
+  const spend =
+    typeof input.spend === "number" && Number.isFinite(input.spend) ? input.spend : 1000;
+  const rates = await getRates();
+  const calculationOptions = {
+    spend,
     bill: input.bill === "local" ? "local" : "usd",
     merchant: input.merchant && isFiatCode(input.merchant) ? input.merchant : undefined,
     asset: input.asset && isAssetCode(input.asset) ? input.asset : undefined,
     tier: input.tier === "boost" ? "boost" : "entry",
-  });
+    rates,
+  } as const;
+  const rendered = formatCardText(card, calculationOptions);
+  const calculation = calcCardForApi(card, calculationOptions);
 
   if (input.format === "text") return text(rendered);
 
@@ -87,6 +94,8 @@ export default defineEventHandler(async (event) => {
     query: q,
     text: rendered,
     card: cardToSummary(card),
+    calculation,
+    rates: { asOf: rates.asOf, source: rates.source },
     alternatives: hits.slice(1).map((c) => ({ slug: c.slug, name: c.name })),
   });
 });
