@@ -205,20 +205,23 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   const hopUsd = toUsd(assetSpent, asset, rates) - toUsd(nativeGross, native, rates);
 
   const cashbackPctUsed = fees.cashbackPct;
-  const amountCap = fees.cashbackAmountCapUsd;
-  const spendCap = fees.cashbackSpendCapUsd;
-  const spendCapSettle = spendCap == null ? null : n(spendCap);
-  const eligibleSettle = spendCapSettle == null ? goodsSettle : Math.min(goodsSettle, spendCapSettle);
-  let cashbackSettle = (eligibleSettle * cashbackPctUsed) / 100;
-  if (amountCap != null) {
-    const capSettle = n(amountCap);
-    cashbackSettle = Math.min(cashbackSettle, capSettle);
+  // Cashback caps are stored as USD-equivalent values. The old code
+  // compared them with settlement-currency units, which overstated or
+  // understated EUR/SGD card rewards.
+  const spendCapUsd = fees.cashbackSpendCapUsd;
+  const eligibleUsd =
+    spendCapUsd == null ? goodsUsd : Math.min(goodsUsd, Math.max(0, n(spendCapUsd)));
+  let cashbackUsd = (eligibleUsd * cashbackPctUsed) / 100;
+  if (fees.cashbackAmountCapUsd != null) {
+    cashbackUsd = Math.min(cashbackUsd, Math.max(0, n(fees.cashbackAmountCapUsd)));
   }
-  const cashback = toUsd(cashbackSettle, settlement, rates);
+  const cashback = cashbackUsd;
 
   const topup = (goodsUsd * topupPct) / 100;
   const spendFee = (goodsUsd * spendFeePctUsed) / 100;
-  const includePhysicalFee = input.includePhysicalFee || card.form === "physical";
+  // An explicit false means the user is comparing the virtual path. Only
+  // infer a physical fee when the caller did not provide the option.
+  const includePhysicalFee = input.includePhysicalFee ?? card.form === "physical";
   const amortized =
     fees.openingFeeUsd / 12 +
     (includePhysicalFee ? n(card.physicalFeeUsd) / 12 : 0) +

@@ -9,11 +9,11 @@ import {
   type UCard,
   CARDS,
 } from "../data/cards.ts";
-import { calcCard, formatPct, formatUsd, type Bill, type Tier } from "./calc.ts";
+import { calcCard, formatPct, formatUsd, type Bill, type CalcResult, type Tier } from "./calc.ts";
 import { cardMoney, pegLabel } from "./money.ts";
-import { isAssetCode, isFiatCode, type AssetCode, type FiatCode } from "./rates.ts";
+import { FALLBACK_RATES, isAssetCode, isFiatCode, type AssetCode, type FiatCode, type RateTable } from "./rates.ts";
 
-export const API_VERSION = "1.1.0";
+export const API_VERSION = "1.2.0";
 export const SITE_URL = "https://card.stelloras.com";
 
 const ALIASES: Record<string, string> = {
@@ -176,20 +176,50 @@ export function cardToSummary(card: UCard) {
   };
 }
 
-export function formatCardText(
-  card: UCard,
-  opts?: { spend?: number; bill?: Bill; merchant?: FiatCode; asset?: AssetCode; tier?: Tier },
-): string {
-  const spend = opts?.spend ?? 1000;
+function safeSpend(value: number | undefined): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 1000;
+  return Math.min(Math.max(value, 0), 1_000_000);
+}
+
+export interface CardTextOptions {
+  spend?: number;
+  bill?: Bill;
+  merchant?: FiatCode;
+  asset?: AssetCode;
+  tier?: Tier;
+  rates?: RateTable;
+  includePhysicalFee?: boolean;
+}
+
+export function calcCardForApi(card: UCard, opts: CardTextOptions = {}): CalcResult {
   const merchant: FiatCode =
-    opts?.merchant && isFiatCode(opts.merchant)
+    opts.merchant && isFiatCode(opts.merchant)
       ? opts.merchant
-      : opts?.bill === "local"
+      : opts.bill === "local"
         ? "TWD"
         : "USD";
-  const asset: AssetCode = opts?.asset && isAssetCode(opts.asset) ? opts.asset : "USDT";
+  const asset: AssetCode =
+    opts.asset && isAssetCode(opts.asset) ? opts.asset : "USDT";
+  const tier = opts.tier ?? "entry";
+  return calcCard(card, {
+    spend: safeSpend(opts.spend),
+    merchant,
+    asset,
+    tier,
+    includePhysicalFee: opts.includePhysicalFee ?? false,
+    rates: opts.rates ?? FALLBACK_RATES,
+  });
+}
+export function formatCardText(
+  card: UCard,
+  opts?: CardTextOptions,
+): string {
+  const spend = safeSpend(opts?.spend);
+  const rates = opts?.rates ?? FALLBACK_RATES;
+  const result = calcCardForApi(card, opts);
+  const merchant = result.merchant;
+  const asset = result.asset;
   const tier = opts?.tier ?? "entry";
-  const result = calcCard(card, { spend, merchant, asset, tier, includePhysicalFee: false });
   const money = cardMoney(card);
   const lines = [
     `${card.name}（${card.nameEn}）`,
@@ -210,6 +240,7 @@ export function formatCardText(
     `适合：${card.bestFor}`,
     card.pros.length ? `优点：${card.pros.join("；")}` : "",
     card.cons.length ? `缺点：${card.cons.join("；")}` : "",
+    `汇率：${rates.source} · ${rates.asOf}`,
     `按月消费 $${spend}、${merchant} 账单、${asset} 支付、${tier === "boost" ? "进阶档" : "入门档"}估算：返现 ${formatUsd(result.cashback)}，费用 ${formatUsd(result.fees)}，净 ${formatUsd(result.net)}（${formatPct(result.netPct)}）；实扣 ${result.assetSpent.toFixed(2)} ${result.asset}`,
     `详情：${SITE_URL}/card/${card.slug}`,
   ];

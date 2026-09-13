@@ -6,9 +6,10 @@ import {
   formatCardText,
   notFoundBody,
 } from "../../../src/lib/public-api.ts";
+import { getRates } from "../../../src/lib/rates.ts";
 import { corsPreflight, json } from "../../lib/api-http.ts";
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   if (getMethod(event) === "OPTIONS") return corsPreflight();
   const q = String((getQuery(event) as { q?: string }).q ?? "").trim();
   if (!q) {
@@ -26,13 +27,15 @@ export default defineEventHandler((event) => {
   if (hits.length === 0) {
     return json(notFoundBody(q, catalogSuggestions()), 404);
   }
+  const rates = await getRates();
   return json({
     ok: true,
     query: q,
     count: hits.length,
+    rates: { asOf: rates.asOf, source: rates.source },
     cards: hits.map((card) => ({
       ...cardToSummary(card),
-      text: formatCardText(card),
+      text: formatCardText(card, { rates }),
     })),
   });
 });
