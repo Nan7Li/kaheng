@@ -53,7 +53,7 @@ for (const card of CARDS) {
   if (!card.regions.length) errors.push(`${card.slug}: regions cannot be empty`);
   for (const field of numericFields) {
     const value = card[field];
-    if (value === undefined) continue;
+    if (value === undefined || value === null) continue;
     if (!Number.isFinite(value) || value < 0) errors.push(`${card.slug}.${field}: invalid ${value}`);
     if (field.endsWith("Pct") && value > 100)
       errors.push(`${card.slug}.${field}: percentage exceeds 100`);
