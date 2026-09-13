@@ -241,7 +241,7 @@ export function formatCardText(
     card.pros.length ? `优点：${card.pros.join("；")}` : "",
     card.cons.length ? `缺点：${card.cons.join("；")}` : "",
     `汇率：${rates.source} · ${rates.asOf}`,
-    `按月消费 ${spend}、${merchant} 账单、${asset} 支付、${tier === "boost" ? "进阶档" : "入门档"}估算：返现 ${formatUsd(result.cashback)}，费用 ${formatUsd(result.fees)}，净 ${formatUsd(result.net)}（${formatPct(result.netPct)}）；实扣 ${result.assetSpent.toFixed(2)} ${result.asset}`,
+    `按月消费 $${spend}、${merchant} 账单、${asset} 支付、${tier === "boost" ? "进阶档" : "入门档"}估算：返现 ${formatUsd(result.cashback)}，费用 ${formatUsd(result.fees)}，净 ${formatUsd(result.net)}（${formatPct(result.netPct)}）；实扣 ${result.assetSpent.toFixed(2)} ${result.asset}`,
     `详情：${SITE_URL}/card/${card.slug}`,
   ];
   return lines.filter(Boolean).join("\n");
