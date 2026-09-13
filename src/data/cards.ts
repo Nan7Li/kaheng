@@ -132,7 +132,7 @@ export interface UCard {
   updatedAt: string;
 }
 
-export const DATA_AS_OF = "2026-09-10";
+export const DATA_AS_OF = "2026-09-12";
 
 export const CARDS: UCard[] = [
   {
