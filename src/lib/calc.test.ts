@@ -60,6 +60,17 @@ test("OKX regional caps are not conflated", () => {
   assert.equal(card("okx-sg").cashbackAmountCapHighUsd, 1000);
 });
 
+test("cashback amount caps remain USD-based on EUR settlement cards", () => {
+  const result = calcCard(card("okx-eea"), {
+    spend: 10000,
+    merchant: "EUR",
+    asset: "USDG",
+    tier: "entry",
+    rates,
+  });
+  assert.ok(Math.abs(result.cashback - 50) < 0.02);
+});
+
 test("OKX deducts USDG, not USDT", () => {
   assert.equal(cardMoney(card("okx")).nativeAsset, "USDG");
   assert.equal(cardMoney(card("okx-eea")).settlement, "EUR");
