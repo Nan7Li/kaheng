@@ -1,5 +1,6 @@
 import { CARDS } from "../../../src/data/cards.ts";
 import { catalogSuggestions, findCards, formatCardText } from "../../../src/lib/public-api.ts";
+import { getRates } from "../../../src/lib/rates.ts";
 import { corsPreflight, json } from "../../lib/api-http.ts";
 
 type TelegramMessage = {
@@ -34,12 +35,20 @@ async function sendTelegram(chatId: number, text: string): Promise<void> {
 export default defineEventHandler(async (event) => {
   if (getMethod(event) === "OPTIONS") return corsPreflight();
 
-  const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (expected) {
-    const got = getHeader(event, "x-telegram-bot-api-secret-token");
-    if (got !== expected) {
-      return json({ ok: false, error: "unauthorized" }, 401);
-    }
+  const expected = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
+  if (!expected) {
+    return json(
+      {
+        ok: false,
+        error: "webhook_not_configured",
+        message: "生产环境必须配置 TELEGRAM_WEBHOOK_SECRET。",
+      },
+      503,
+    );
+  }
+  const got = getHeader(event, "x-telegram-bot-api-secret-token");
+  if (got !== expected) {
+    return json({ ok: false, error: "unauthorized" }, 401);
   }
 
   let update: TelegramUpdate = {};
@@ -60,10 +69,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const hits = findCards(cleaned, CARDS);
+  const rates = hits.length > 0 ? await getRates() : undefined;
   const reply =
     hits.length === 0
       ? `卡库里没有找到「${cleaned}」。可以换 slug 再问，例如 plasma、etherfi、mexc。`
-      : formatCardText(hits[0]!);
+      : formatCardText(hits[0]!, { rates });
 
   if (chatId) await sendTelegram(chatId, reply);
   return json({
@@ -71,5 +81,6 @@ export default defineEventHandler(async (event) => {
     query: cleaned,
     slug: hits[0]?.slug,
     text: reply,
+    rates: rates ? { asOf: rates.asOf, source: rates.source } : undefined,
   });
 });
