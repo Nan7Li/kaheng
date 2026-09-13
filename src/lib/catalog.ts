@@ -46,6 +46,9 @@ function normalizeLevel(raw: unknown): CardLevel | null {
   if (typeof l.fxFeePct === "number" && Number.isFinite(l.fxFeePct)) {
     level.fxFeePct = l.fxFeePct;
   }
+  if (l.cashbackKind === "cash" || l.cashbackKind === "stablecoin" || l.cashbackKind === "token" || l.cashbackKind === "points" || l.cashbackKind === "unknown") level.cashbackKind = l.cashbackKind;
+  if (typeof l.cashbackAsset === "string" && l.cashbackAsset) level.cashbackAsset = l.cashbackAsset;
+  if (Array.isArray(l.cashbackBands)) level.cashbackBands = l.cashbackBands.filter((b): b is NonNullable<typeof l.cashbackBands>[number] => Boolean(b && typeof b === "object"));
   if (typeof l.cashbackPct === "number" && Number.isFinite(l.cashbackPct)) {
     level.cashbackPct = l.cashbackPct;
   }
@@ -221,6 +224,9 @@ export function createBlankCard(): UCard {
     cashbackAmountCapHighUsd: null,
     cashbackSpendCapUsd: null,
     cashbackNote: "",
+    cashbackKind: "unknown",
+    cashbackAsset: undefined,
+    cashbackBands: undefined,
     assets: ["USDT"],
     scenes: ["ai"],
     risk: 3,
