@@ -27,7 +27,7 @@ export const FIAT_CODES: FiatCode[] = [
   "AUD",
 ];
 
-export const ASSET_CODES: AssetCode[] = ["USDT", "USDC", "USDG"];
+export const ASSET_CODES: AssetCode[] = ["USDT", "USDC", "USDG", "EURe"];
 
 export const FIAT_LABEL: Record<FiatCode, string> = {
   USD: "USD 美元",
