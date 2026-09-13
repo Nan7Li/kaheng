@@ -1,10 +1,9 @@
 /**
- * Local email/password sign-in (this app's Better Auth DB — not the broker).
+ * Better Auth's email/password flag is not the Kaheng admin login.
  *
- * Off by default. To enable: set `emailAndPasswordEnabled` to `true` below,
- * then build sign-up / sign-in forms with `authClient.signUp.email` /
- * `authClient.signIn.email` from `@/lib/auth/client` (see the auth skill).
- *
- * Do NOT edit `server.ts` for this — that file is frozen pre-wired config.
+ * The admin area uses the server-only credentials in ADMIN_USERNAME and
+ * ADMIN_PASSWORD, plus a signed HttpOnly session cookie. Keeping this flag
+ * disabled avoids creating a second account system that the admin page does
+ * not use.
  */
 export const emailAndPasswordEnabled = false;
