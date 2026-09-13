@@ -84,7 +84,7 @@ function CardsPage() {
     }));
 
     withResult.sort((a, b) => {
-      if (sort === "risk") return b.card.risk - a.card.risk;
+      if (sort === "risk") return a.card.risk - b.card.risk;
       if (sort === "open") {
         const aCost =
           effectiveFees(a.card, pickLevel(a.card, tier)).openingFeeUsd +
@@ -304,7 +304,7 @@ function CompareBtn({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
-      aria-label="比较"
+      aria-label={on ? "移出比较" : "加入比较"}
       onClick={onClick}
       className={cn(
         "flex size-9 items-center justify-center rounded-full pressable",
