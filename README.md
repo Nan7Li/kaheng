@@ -83,13 +83,17 @@ npm run dev
 
 ### 管理区权限
 
-管理区 `/admin` 使用独立的账户密码登录，不依赖 Google 或 X。请在 Pages 的生产环境变量中配置：
+后台登录地址为 `/login`，使用独立的账户密码登录，不依赖 Google、X 或 OAuth 应用权限。
+
+首次部署或修改账号时，在 Cloudflare Pages → `kaheng` → **Settings → Variables and Secrets → Production** 中设置：
 
 - `ADMIN_USERNAME`：管理员账户名
-- `ADMIN_PASSWORD`：管理员密码（请作为 secret 保存）
-- `ADMIN_SESSION_SECRET`：可选，用于签名登录会话；未配置时会使用 `BETTER_AUTH_SECRET`，再没有则使用管理员密码
+- `ADMIN_PASSWORD`：管理员密码，必须作为 Secret 保存
+- `ADMIN_SESSION_SECRET`：推荐设置为一串随机 Secret，用于签名登录会话
 
-缺少账户或密码时，管理区会保持锁定。不要把密码或其他密钥写进代码；配置变更后重新部署即可生效。
+其中 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD` 缺一不可；没有配置时，管理区会保持锁定。保存变量后需要重新部署，或推送一次 `main` 触发 GitHub Actions。
+
+登录会话有效期为 7 天，后台右上角可以退出登录。不要把密码、会话密钥或其他密钥写进代码，也不要使用 `VITE_` 前缀暴露管理员凭据。
 
 ## 说明
 

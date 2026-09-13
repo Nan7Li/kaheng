@@ -37,7 +37,7 @@ export const authClient = createAuthClient({
  */
 export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 
-/** The upstream providers to render sign-in buttons for. */
+/** Legacy provider list for optional broker sign-in; admin login does not use it. */
 export { GROK_PROVIDERS };
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
@@ -83,8 +83,8 @@ function inLivePreview(): boolean {
 type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: string };
 
 /**
- * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`),
- * federating through the Grok auth broker.
+ * Start optional broker sign-in with one upstream provider.
+ * The admin area uses the separate account/password endpoint instead.
  *
  * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
