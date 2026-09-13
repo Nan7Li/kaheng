@@ -20,6 +20,7 @@ import { cardMoney } from "./money.ts";
 export const SHEET_HEADER = `# 卡衡单卡 v1
 # 把整段复制发给其他 AI 核对或修改，改完原样贴回即可导入。
 # 只改冒号后面的值，不要改字段名。百分号、金额只写数字，不要加 % 或 $。
+# 返现封顶与计返消费均按美元等值记录，不要当作结算币金额。
 # 空着表示无。是否用 是 / 否。优点缺点每行一条，以 - 开头。
 `;
 
@@ -50,6 +51,7 @@ function serializeLevels(levels: CardLevel[] | undefined): string {
     if (l.cashbackPct !== undefined) bits.push(`返现:${l.cashbackPct}`);
     if (l.cashbackAmountCapUsd !== undefined) bits.push(`封顶:${numOrEmpty(l.cashbackAmountCapUsd)}`);
     if (l.cashbackSpendCapUsd !== undefined) bits.push(`计返:${numOrEmpty(l.cashbackSpendCapUsd)}`);
+    if (l.note !== undefined) bits.push(`说明:${l.note}`);
     return `- ${bits.join(" | ")}`;
   });
   return `档位:\n${lines.join("\n")}\n`;
@@ -204,6 +206,7 @@ function parseLevelLine(line: string): CardLevel | null {
   const topup = opt("充值");
   const spend = opt("消费");
   const fx = opt("FX");
+  const note = map.get("说明");
   const cashback = opt("返现");
   const amountCap = cap("封顶");
   const spendCap = cap("计返");
@@ -213,6 +216,7 @@ function parseLevelLine(line: string): CardLevel | null {
   if (topup !== undefined) level.topupFeePct = topup;
   if (spend !== undefined) level.spendFeePct = spend;
   if (fx !== undefined) level.fxFeePct = fx;
+  if (note !== undefined) level.note = note;
   if (cashback !== undefined) level.cashbackPct = cashback;
   if (amountCap !== undefined) level.cashbackAmountCapUsd = amountCap;
   if (spendCap !== undefined) level.cashbackSpendCapUsd = spendCap;
