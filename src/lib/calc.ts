@@ -220,6 +220,8 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   const topup = (goodsUsd * topupPct) / 100;
   const spendFee = (goodsUsd * spendFeePctUsed) / 100;
   // An explicit false means the user is comparing the virtual path. Only
+  // infer a physical fee when the caller did not provide the option.
+  const includePhysicalFee = input.includePhysicalFee ?? card.form === "physical";
   const amortized =
     fees.openingFeeUsd / 12 +
     (includePhysicalFee ? n(card.physicalFeeUsd) / 12 : 0) +
