@@ -1,4 +1,4 @@
-import type { CardLevel, Scene, UCard } from "../data/cards.ts";
+import type { CashbackBand, CashbackKind, CardLevel, Scene, UCard } from "../data/cards.ts";
 import { cardMoney, isPairedPeg } from "./money.ts";
 import {
   FALLBACK_RATES,
@@ -33,12 +33,21 @@ export interface EffectiveFees {
   spendFeePct: number;
   fxFeePct: number;
   cashbackPct: number;
+  cashbackKind: CashbackKind;
+  cashbackAsset?: string;
+  cashbackBands?: CashbackBand[];
   cashbackAmountCapUsd: number | null;
   cashbackSpendCapUsd: number | null;
 }
 
 export interface CalcResult {
+  /** USD value included in net; token/points rewards are 0 unless valued explicitly. */
   cashback: number;
+  /** Advertised USD-equivalent reward before reward-type valuation. */
+  rewardFaceValueUsd: number;
+  rewardKind: CashbackKind;
+  rewardAsset?: string;
+  cashbackValued: boolean;
   topup: number;
   conversion: number;
   spendFee: number;
@@ -87,6 +96,9 @@ export function resolveLevels(card: UCard): CardLevel[] {
     id: "entry",
     name: "入门档",
     cashbackPct: n(card.cashbackPct),
+    cashbackKind: card.cashbackKind ?? "unknown",
+    cashbackAsset: card.cashbackAsset,
+    cashbackBands: card.cashbackBands,
     cashbackAmountCapUsd: card.cashbackAmountCapUsd,
     cashbackSpendCapUsd: card.cashbackSpendCapUsd,
   };
@@ -125,6 +137,9 @@ export function effectiveFees(card: UCard, level: CardLevel): EffectiveFees {
     spendFeePct: inheritNum(level.spendFeePct, card.spendFeePct),
     fxFeePct: inheritNum(level.fxFeePct, card.fxFeePct),
     cashbackPct: inheritNum(level.cashbackPct, card.cashbackPct),
+    cashbackKind: level.cashbackKind ?? card.cashbackKind ?? "unknown",
+    cashbackAsset: level.cashbackAsset ?? card.cashbackAsset,
+    cashbackBands: level.cashbackBands ?? card.cashbackBands,
     cashbackAmountCapUsd: inheritCap(level.cashbackAmountCapUsd, card.cashbackAmountCapUsd),
     cashbackSpendCapUsd: inheritCap(level.cashbackSpendCapUsd, card.cashbackSpendCapUsd),
   };
@@ -205,17 +220,31 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   const hopUsd = toUsd(assetSpent, asset, rates) - toUsd(nativeGross, native, rates);
 
   const cashbackPctUsed = fees.cashbackPct;
-  // Cashback caps are stored as USD-equivalent values. The old code
-  // compared them with settlement-currency units, which overstated or
-  // understated EUR/SGD card rewards.
-  const spendCapUsd = fees.cashbackSpendCapUsd;
-  const eligibleUsd =
-    spendCapUsd == null ? goodsUsd : Math.min(goodsUsd, Math.max(0, n(spendCapUsd)));
-  let cashbackUsd = (eligibleUsd * cashbackPctUsed) / 100;
-  if (fees.cashbackAmountCapUsd != null) {
-    cashbackUsd = Math.min(cashbackUsd, Math.max(0, n(fees.cashbackAmountCapUsd)));
+  const rewardKind = fees.cashbackKind;
+  const rewardAsset = fees.cashbackAsset;
+  const bands = (fees.cashbackBands ?? []).filter((b) => b.pct >= 0 && (b.upToSpendUsd == null || b.upToSpendUsd >= 0));
+  let rewardFaceValueUsd = 0;
+  if (bands.length > 0) {
+    let previous = 0;
+    for (const band of bands) {
+      const boundary = band.upToSpendUsd ?? Number.POSITIVE_INFINITY;
+      const slice = Math.max(0, Math.min(goodsUsd, boundary) - previous);
+      rewardFaceValueUsd += (slice * band.pct) / 100;
+      previous = boundary;
+      if (goodsUsd <= boundary) break;
+    }
+  } else {
+    // Legacy single-rate cards retain the old amount cap, but never turn the
+    // spend above a cap into zero unless the source explicitly defines a band.
+    const spendCapUsd = fees.cashbackSpendCapUsd;
+    const eligibleUsd = spendCapUsd == null ? goodsUsd : Math.min(goodsUsd, Math.max(0, n(spendCapUsd)));
+    rewardFaceValueUsd = (eligibleUsd * cashbackPctUsed) / 100;
   }
-  const cashback = cashbackUsd;
+  if (fees.cashbackAmountCapUsd != null) {
+    rewardFaceValueUsd = Math.min(rewardFaceValueUsd, Math.max(0, n(fees.cashbackAmountCapUsd)));
+  }
+  const cashbackValued = rewardKind === "cash" || rewardKind === "stablecoin";
+  const cashback = cashbackValued ? rewardFaceValueUsd : 0;
 
   const topup = (goodsUsd * topupPct) / 100;
   const spendFee = (goodsUsd * spendFeePctUsed) / 100;
@@ -260,9 +289,14 @@ export function calcCard(card: UCard, input: CalcInput, now = new Date()): CalcR
   };
 }
 
-export function rankCards(cards: UCard[], input: CalcInput): Array<UCard & { result: CalcResult }> {
+export function rankCards(
+  cards: UCard[],
+  input: CalcInput,
+  options: { includeUnverified?: boolean } = {},
+): Array<UCard & { result: CalcResult }> {
   return cards
     .filter((c) => c.status !== "shutdown")
+    .filter((c) => options.includeUnverified || c.verification === "official" || c.verification === "partial")
     .map((c) => ({ ...c, result: calcCard(c, input) }))
     .sort((a, b) => b.result.net - a.result.net);
 }
