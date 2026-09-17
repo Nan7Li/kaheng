@@ -1,7 +1,7 @@
 ---
 name: Bug report
 description: Report a reproducible problem in the UI, API, calculations, or deployment
-Title: "bug: "
+title: "bug: "
 labels: []
 assignees: []
 ---
